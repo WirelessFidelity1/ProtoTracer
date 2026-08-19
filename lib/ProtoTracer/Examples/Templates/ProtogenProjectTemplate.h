@@ -147,9 +147,9 @@ private:
     FunctionGenerator fGenMatYMove = FunctionGenerator(FunctionGenerator::Sine, -2.0f, 2.0f, 6.7f);
 
     /**
-     * @brief Fan controller for controlling a fan's PWM.
+     * @brief Fan controller for controlling a fan's PWM. 
      */
-    FanController fanController = FanController(15);
+    FanController fanController = FanController(23);
 
     /**
      * @brief Gesture sensor used for detecting "boops."

@@ -11,51 +11,73 @@
 
 #pragma once
 
-#include <Arduino.h> // Include for Arduino compatibility.
+#include <Arduino.h>
 
 /**
  * @class ButtonHandler
- * @brief Manages button input and state with interrupt support.
- *
- * The ButtonHandler class provides static methods for initializing a button,
- * handling button press and hold logic, and retrieving the current state and value.
+ * @brief Manages button input and state with USB keyboard support.
  */
 class ButtonHandler {
 private:
-    static long previousMillisISR; ///< Tracks the last interrupt service routine (ISR) trigger time in milliseconds.
-    static long previousMillisHold; ///< Tracks the last hold event time in milliseconds.
-    static uint16_t holdingToggle; ///< Time threshold for detecting holding behavior in milliseconds.
-    static uint8_t currentValue; ///< The current value of the button (e.g., press count).
-    static uint8_t maxValue; ///< The maximum value for the button press count.
-    static uint8_t pin; ///< The pin number associated with the button.
-    static bool holdingState; ///< Indicates whether the button is in a holding state.
+    static long previousMillisISR;
+    static long previousMillisHold;
+    static uint16_t holdingToggle;
+    static uint8_t currentValue;
+    static uint8_t maxValue;
+    static uint8_t pin;
+    static bool holdingState;
 
-    /**
-     * @brief Interrupt service routine (ISR) for handling button presses.
-     */
+    // USB keyboard state
+    static volatile bool rightPressed;
+    static volatile bool okPressed;
+
+    // USB keyboard callbacks
+    static void OnRawPress(uint8_t keycode);
+    static void OnRawRelease(uint8_t keycode);
+
+    // Original interrupt handler
     static void isr();
 
 public:
     /**
-     * @brief Initializes the ButtonHandler with specified parameters.
-     *
-     * @param pin The pin number associated with the button.
-     * @param maxValue The maximum value for the button press count.
-     * @param holdingToggle The time threshold for detecting holding behavior in milliseconds.
+     * @brief Initializes the ButtonHandler.
      */
     static void Initialize(uint8_t pin, uint8_t maxValue, uint16_t holdingToggle);
 
     /**
-     * @brief Retrieves the holding state of the button.
-     *
-     * @return True if the button is being held, false otherwise.
+     * @brief Retrieves the holding state.
      */
     static bool GetHoldingState();
 
     /**
-     * @brief Retrieves the current value of the button.
-     *
-     * @return The current button value (e.g., press count).
+     * @brief Retrieves the current value.
      */
     static uint8_t GetValue();
+
+    // --------------------------------------------------
+    // USB Keyboard
+    // --------------------------------------------------
+
+    /**
+     * @brief Initializes the USB Host keyboard.
+     */
+    static void BeginUSB();
+
+    /**
+     * @brief Services the USB Host.
+     * Must be called repeatedly from loop().
+     */
+    static void UpdateUSB();
+
+    /**
+     * @brief Returns true when a Right Arrow press occurred.
+     * The press is consumed when read.
+     */
+    static bool GetRightPressed();
+
+    /**
+     * @brief Returns true when an Enter/OK press occurred.
+     * The press is consumed when read.
+     */
+    static bool GetOKPressed();
 };

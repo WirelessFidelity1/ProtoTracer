@@ -94,7 +94,8 @@ public:
         deltaDisplayBackground.GetObject()->SetMaterial(GetFaceMaterial());
 
         hud.SetFaceArray(faceArray);
-        hud.SetFacePixelArray(cameras.GetMainPixelGroup());
+        // hud.SetFacePixelArray(cameras.GetMainPixelGroup());
+        
 
         LinkControlParameters();
         

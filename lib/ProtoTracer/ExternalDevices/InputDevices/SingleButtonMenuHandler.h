@@ -38,6 +38,7 @@ private:
     static uint8_t pin; ///< The pin number associated with the button.
     static bool holdingState; ///< Indicates whether the button is in a holding state.
     static bool previousState; ///< Tracks the previous state of the button.
+    static bool previousState2; ///< Tracks the previous state of the button.
 
     /**
      * @brief Updates the button state and menu navigation.

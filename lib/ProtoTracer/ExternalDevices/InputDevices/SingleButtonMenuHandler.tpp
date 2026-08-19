@@ -1,4 +1,5 @@
 #pragma once
+#include "ButtonHandler.h"
 
 template <uint8_t menuCount>
 IntervalTimer MenuHandler<menuCount>::menuChangeTimer;
@@ -28,33 +29,30 @@ template <uint8_t menuCount>
 bool MenuHandler<menuCount>::previousState;
 
 template <uint8_t menuCount>
+bool MenuHandler<menuCount>::previousState2;
+
+template <uint8_t menuCount>
 void MenuHandler<menuCount>::UpdateState() {
-    long currentTime = millis();
-    bool pinState = digitalRead(pin);
-    long timeOn = 0;
 
-    if (pinState && !previousState) {  // Pin not pressed, not triggered -> reset time
-        previousMillisHold = currentTime;
-    } else if (pinState && previousState) {  // Pin not pressed, was triggered -> measure time
-        timeOn = currentTime - previousMillisHold;
+    // Right Arrow = change current value
+    if (ButtonHandler::GetRightPressed()) {
 
-        previousState = false;
-    } else if (!pinState) {  // Pin is pressed,
-        previousState = true;
+        currentValue[currentMenu]++;
+
+        if (currentValue[currentMenu] >= maxValue[currentMenu])
+            currentValue[currentMenu] = 0;
     }
 
-    if (timeOn > holdingTime && pinState) {
-        previousMillisHold = currentTime;
+
+    // OK / Enter = save and change menu
+    if (ButtonHandler::GetOKPressed()) {
 
         WriteEEPROM(currentMenu, currentValue[currentMenu]);
 
-        currentMenu += 1;
-        if (currentMenu >= menuCount) currentMenu = 0;
-    } else if (timeOn > 50 && pinState) {
-        previousMillisHold = currentTime;
+        currentMenu++;
 
-        currentValue[currentMenu] += 1;
-        if (currentValue[currentMenu] >= maxValue[currentMenu]) currentValue[currentMenu] = 0;
+        if (currentMenu >= menuCount)
+            currentMenu = 0;
     }
 }
 

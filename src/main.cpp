@@ -18,6 +18,7 @@
  */
 
 #include "Examples/UserConfiguration.h"
+#include "ExternalDevices/InputDevices/ButtonHandler.h"
 
 #if defined(PROJECT_PROTOGEN_HUB75)
     #include "Examples/Protogen/ProtogenHUB75Project.h"
@@ -50,6 +51,8 @@ void setup() {
     Serial.begin(115200); ///< Initializes the serial port for debugging.
     Serial.println("\nStarting...");
 
+    ButtonHandler::BeginUSB();
+
     #ifndef PROJECT_VERIFY_HARDWARE
     project.Initialize(); ///< Initializes the selected project.
     delay(100); ///< Ensures stability after initialization.
@@ -69,6 +72,8 @@ void setup() {
  * If PROJECT_VERIFY_HARDWARE is defined, this function is disabled.
  */
 void loop() {
+
+    ButtonHandler::UpdateUSB();
     #ifndef PROJECT_VERIFY_HARDWARE
     float ratio = (float)(millis() % 5000) / 5000.0f; ///< Calculates animation ratio based on time.
 

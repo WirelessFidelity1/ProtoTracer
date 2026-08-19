@@ -219,9 +219,9 @@ void HeadsUpDisplay::SetFaceArray(const __FlashStringHelper** faceNames) {
     useExternalFace = true;
 }
 
-void HeadsUpDisplay::SetFacePixelArray(const IPixelGroup* pixelGroup) {
-    this->facePixels = pixelGroup;
-}
+// void HeadsUpDisplay::SetFacePixelArray(const IPixelGroup* pixelGroup) {
+//     this->facePixels = pixelGroup;
+// }
 
 void HeadsUpDisplay::SetFaceMin(Vector2D faceMin) {
     this->faceMin = faceMin;
@@ -322,14 +322,17 @@ void HeadsUpDisplay::ApplyEffect(IPixelGroup* pixelGroup) {
     
     unsigned int pixelCount = pixelGroup->GetPixelCount();
     
-    for (unsigned int i = 0; i < pixelCount; i++){
-        Vector2D pixelLocation = pixelGroup->GetCoordinate(i);
-        RGBColor color = *pixelGroup->GetColor(i);
+    if (pixelCount != 88) {
+        for (unsigned int i = 0; i < pixelCount; i++){
+            Vector2D pixelLocation = pixelGroup->GetCoordinate(i);
+            RGBColor color = *pixelGroup->GetColor(i);
 
-        if(color.R > 0 || color.G > 0 || color.G > 0){
-            EnableBitFaceRender(pixelLocation.X, pixelLocation.Y);
+            if(color.R > 0 || color.G > 0 || color.G > 0){
+                EnableBitFaceRender(pixelLocation.X, pixelLocation.Y);
+            }
         }
     }
+    
 }
 
 void HeadsUpDisplay::ResetDisplayBuffer() {
