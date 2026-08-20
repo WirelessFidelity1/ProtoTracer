@@ -37,9 +37,10 @@ uint8_t Menu::huef = 0;
 uint8_t Menu::hueb = 0;
 uint8_t Menu::effect = 0;
 uint8_t Menu::fanSpeed = 0;
+uint8_t Menu::fanExt = 0;
 
 //                    111111111111222222222222333333333333444444444444555555555555666666666666777777777777888888888888999999999999111111111111222222222222333333333333444444444444
-String Menu::line1 = "                 PANELS      ANT         MIC         MIC LV      BOOP        S MRR       SIZE        CLR         HUE F       HUE B       EFFCT       FAN A  ";
+String Menu::line1 = "                 PANELS      ANT         MIC         MIC LV      BOOP        S MRR       SIZE        CLR         HUE F       HUE B       EFFCT       FAN INT     FAN EXT";
 String Menu::line2 = " a b c d e f   12^45       12^45       ON off     123456|8     on OFF      ON off      12^45      123456|8    123456|8    123456|8    123456|8    123456|8  ";
 
 EffectChangeTrack<1> Menu::effectChange;
@@ -78,6 +79,7 @@ void Menu::SetMaxEntries() {
     MenuHandler<menuCount>::SetMenuMax(HueB, 10);
     MenuHandler<menuCount>::SetMenuMax(EffectS, 10);
     MenuHandler<menuCount>::SetMenuMax(FanSpeed, 10);
+    MenuHandler<menuCount>::SetMenuMax(FanExt, 10);
 }
 
 void Menu::SetDefaultEntries() {
@@ -95,7 +97,7 @@ void Menu::SetDefaultEntries() {
     MenuHandler<menuCount>::SetDefaultValue(HueB, 0);
     MenuHandler<menuCount>::SetDefaultValue(EffectS, 0);
     MenuHandler<menuCount>::SetDefaultValue(FanSpeed, 0);
-
+    MenuHandler<menuCount>::SetDefaultValue(FanExt, 0);
     MenuHandler<menuCount>::SetInitialized();
 }
 
@@ -374,6 +376,7 @@ void Menu::GenerateText() {
     line2 += GenerateLine(10, GetHueB());
     line2 += GenerateLine(10, GetEffectS());
     line2 += GenerateLine(10, GetFanSpeed());
+    line2 += GenerateLine(10, GetFanExt());
 
     textEngine.SetText(1, line2, false);
 }
@@ -493,6 +496,15 @@ void Menu::SetFanSpeed(uint8_t fanSpeed) {
 uint8_t Menu::GetFanSpeed() {
     if (isSecondary) return fanSpeed;
     else return MenuHandler<menuCount>::GetMenuValue(FanSpeed);
+}
+
+void Menu::SetFanExt(uint8_t fanExt) {
+    Menu::fanExt = fanExt;
+}
+
+uint8_t Menu::GetFanExt() {
+    if (isSecondary) return fanExt;
+    else return MenuHandler<menuCount>::GetMenuValue(FanExt);
 }
 
 float Menu::ShowMenu() {

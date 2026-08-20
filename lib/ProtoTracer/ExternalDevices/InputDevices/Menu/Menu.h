@@ -67,14 +67,15 @@ public:
         HueF,            ///< Controls the front hue value.
         HueB,            ///< Controls the back hue value.
         EffectS,         ///< Controls which post-processing effect is active.
-        FanSpeed         ///< Controls the fan speed.
+        FanSpeed,         ///< Controls the fan speed.
+        FanExt           ///< Controls the external fan speed (if applicable).
     };
 
 private:
     /**
      * @brief Total number of menu items.
      */
-    static const uint8_t menuCount = 13;
+    static const uint8_t menuCount = 14;
 
     /**
      * @brief A RainbowNoise material (used for text styling, if desired).
@@ -152,6 +153,7 @@ private:
     static uint8_t hueb;            ///< Back hue setting.
     static uint8_t effect;          ///< Current effect index.
     static uint8_t fanSpeed;        ///< Fan speed setting.
+    static uint8_t fanExt;          ///< External fan speed setting (if applicable).
 
     /**
      * @brief Raw string lines for the textual interface (line1 as label row, line2 as value row).
@@ -487,6 +489,18 @@ public:
      * @return The fan speed index (0-10).
      */
     static uint8_t GetFanSpeed();
+    
+    /**
+     * @brief Sets the fan speed if in isSecondary mode. (external)
+     * @param fanSpeed The new fan speed index (0-10).
+     */
+    static void SetFanExt(uint8_t fanExt);
+    
+    /**
+     * @brief Gets the current fan speed index. (external)
+     * @return The fan speed index (0-10).
+     */
+    static uint8_t GetFanExt();
 
     /**
      * @brief Returns how much of the menu is shown, typically normalized (0.0 to 1.0).

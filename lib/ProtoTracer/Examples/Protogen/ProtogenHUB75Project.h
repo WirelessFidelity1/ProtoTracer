@@ -85,8 +85,9 @@ private:
         AddMaterialFrame(Color::CHORIZONTALRAINBOW, 0.8f);
     }
 
+    // use dummy 34 pin for button, using usb keyboard for input, so no button is needed
 public:
-    ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 2, Vector2D(), Vector2D(192.0f, 94.0f), 22, 23, 9){
+    ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 2, Vector2D(), Vector2D(192.0f, 94.0f), 22, 34, 9){
         scene.AddObject(pM.GetObject());
         scene.AddObject(deltaDisplayBackground.GetObject());
 
