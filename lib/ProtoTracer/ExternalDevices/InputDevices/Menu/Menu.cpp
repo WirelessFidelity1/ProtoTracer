@@ -39,7 +39,7 @@ uint8_t Menu::effect = 0;
 uint8_t Menu::fanSpeed = 0;
 
 //                    111111111111222222222222333333333333444444444444555555555555666666666666777777777777888888888888999999999999111111111111222222222222333333333333444444444444
-String Menu::line1 = "               BRIGHT    SDE BRIGHT     MIC      MIC LEVEL      BOOP        SPEC        SIZE       COLOR       HUE F       HUE B       EFFECT    FAN SPEED  ";
+String Menu::line1 = "                 PANELS      ANT         MIC         MIC LV      BOOP        S MRR       SIZE        CLR         HUE F       HUE B       EFFCT       FAN A  ";
 String Menu::line2 = " a b c d e f   12^45       12^45       ON off     123456|8     on OFF      ON off      12^45      123456|8    123456|8    123456|8    123456|8    123456|8  ";
 
 EffectChangeTrack<1> Menu::effectChange;
@@ -320,6 +320,10 @@ char Menu::IntToBlink(char value) {
 
 String Menu::GenerateLine(uint8_t options, uint8_t selection) {
     String text;
+
+    // Add 2 spaces before the numbers
+    text += "  ";
+
     uint8_t spacing = options >= 5 ? 3 : (menuLength - options) / 2;
 
     for (uint8_t i = 0; i < spacing; i++) {
@@ -360,10 +364,10 @@ void Menu::GenerateText() {
 
     line2 += GenerateLine(10, GetBrightness());
     line2 += GenerateLine(10, GetAccentBrightness());
-    line2 += UseMicrophone() ? "   on OFF   " : "   ON off   ";
+    line2 += UseMicrophone() ? "     on OFF " : "     ON off ";
     line2 += GenerateLine(10, GetMicLevel());
-    line2 += UseBoopSensor() ? "   on OFF   " : "   ON off   ";
-    line2 += MirrorSpectrumAnalyzer() ? "   on OFF   " : "   ON off   ";
+    line2 += UseBoopSensor() ? "     on OFF " : "     ON off ";
+    line2 += MirrorSpectrumAnalyzer() ? "     on OFF " : "     ON off ";
     line2 += GenerateLine(10, GetFaceSize());
     line2 += GenerateLine(10, GetFaceColor());
     line2 += GenerateLine(10, GetHueF());
