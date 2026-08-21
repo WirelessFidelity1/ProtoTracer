@@ -432,23 +432,23 @@ void HeadsUpDisplay::UpdateFaceInformation() {
     if (useExternalFace) CheckInvertPrintText(3, 13, 0, faceNames[Menu::GetFaceState()]);//Face
     else CheckInvertPrintText(3, 13, 0, faceArray[Menu::GetFaceState()]);
     
-    CheckInvertPrintText(34, 13, 1, percentArray[Menu::GetBrightness()]);//Brightness
+    CheckInvertPrintText(34, 13, 1, percentArray[Menu::GetBrightness()]);//Panel Brightness
     CheckInvertPrintText(66, 13, 7, percentArray[Menu::GetFaceSize()]);//Face Size
     CheckInvertPrintText(98, 13, 3, onOffArray[Menu::UseMicrophone()]);//Use Microphone
 
     //ROW 2
     CheckInvertPrintText(3, 28, 11, effectArray[Menu::GetEffectS()]);//Effect
-    CheckInvertPrintText(34, 28, 2, percentArray[Menu::GetAccentBrightness()]);//Side Brightness
+    CheckInvertPrintText(34, 28, 2, percentArray[Menu::GetAccentBrightness()]);//Antenna Brightness TODO
     CheckInvertPrintText(66, 28, 8, colorArray[Menu::GetFaceColor()]);//Face Color
     CheckInvertPrintText(98, 28, 5, onOffArray[Menu::UseBoopSensor()]);//Use Boop
 
     //ROW 3
-    CheckInvertPrintText(3, 45, 9, hueArray[Menu::GetHueF()]);//Hue front
+    CheckInvertPrintText(3, 45, 9, colorArray[Menu::GetHueF()]);//Antenna Color TODO
     CheckInvertPrintText(34, 45, 4, percentArray[Menu::GetMicLevel()]);//Mic level
 
     //ROW 4
-    CheckInvertPrintText(3, 60, 10, hueArray[Menu::GetHueB()]);//Hue back
-    CheckInvertPrintText(34, 60, 12, percentArray[Menu::GetFanSpeed()]);//Mirror spectrum analyzer
+    CheckInvertPrintText(3, 60, 10, percentArray[Menu::GetFanExt()]);//Fan Speed Aux Cheek
+    CheckInvertPrintText(34, 60, 12, percentArray[Menu::GetFanSpeed()]);//Fan Speed Internal 
     
     display.drawBitmap(66, 35, faceBitmap, 64, 32, 0);
 }

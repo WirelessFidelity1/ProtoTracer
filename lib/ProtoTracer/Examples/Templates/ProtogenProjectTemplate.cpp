@@ -120,14 +120,14 @@ void ProtogenProject::UpdateFace(float ratio) {
     
     SetMaterialColor();
     RGBColor hueFront = RGBColor(255, 0, 0).HueShift(Menu::GetHueF() * 36);
-    RGBColor hueBack  = RGBColor(255, 0, 0).HueShift(Menu::GetHueB() * 36);
+    // RGBColor hueBack  = RGBColor(255, 0, 0).HueShift(Menu::GetHueB() * 36);
 
     gradientSpectrum[0] = hueFront;
-    gradientSpectrum[1] = hueBack;
+    // gradientSpectrum[1] = hueBack;
     gradientMat.UpdateGradient(gradientSpectrum);
 
     flowNoise.SetGradient(hueFront, 0);
-    flowNoise.SetGradient(hueBack, 1);
+    // flowNoise.SetGradient(hueBack, 1);
 
     UpdateKeyFrameTracks();
 

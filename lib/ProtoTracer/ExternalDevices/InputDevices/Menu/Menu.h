@@ -65,7 +65,7 @@ public:
         FaceSize,        ///< Controls the size of the face mesh or display.
         Color,           ///< Controls the face color selection.
         HueF,            ///< Controls the front hue value.
-        HueB,            ///< Controls the back hue value.
+        // HueB,            ///< Controls the back hue value.
         EffectS,         ///< Controls which post-processing effect is active.
         FanSpeed,         ///< Controls the fan speed.
         FanExt           ///< Controls the external fan speed (if applicable).
@@ -75,7 +75,7 @@ private:
     /**
      * @brief Total number of menu items.
      */
-    static const uint8_t menuCount = 14;
+    static const uint8_t menuCount = 13;
 
     /**
      * @brief A RainbowNoise material (used for text styling, if desired).
@@ -150,7 +150,7 @@ private:
     static uint8_t faceSize;        ///< Face size setting.
     static uint8_t color;           ///< Current color setting.
     static uint8_t huef;            ///< Front hue setting.
-    static uint8_t hueb;            ///< Back hue setting.
+    // static uint8_t hueb;            ///< Back hue setting.
     static uint8_t effect;          ///< Current effect index.
     static uint8_t fanSpeed;        ///< Fan speed setting.
     static uint8_t fanExt;          ///< External fan speed setting (if applicable).
@@ -454,17 +454,17 @@ public:
      */
     static uint8_t GetHueF();
 
-    /**
-     * @brief Sets the back hue value if in isSecondary mode.
-     * @param hueb The new back hue (0-10).
-     */
-    static void SetHueB(uint8_t hueb);
+    // /**
+    //  * @brief Sets the back hue value if in isSecondary mode.
+    //  * @param hueb The new back hue (0-10).
+    //  */
+    // static void SetHueB(uint8_t hueb);
 
-    /**
-     * @brief Gets the back hue value.
-     * @return The back hue (0-10).
-     */
-    static uint8_t GetHueB();
+    // /**
+    //  * @brief Gets the back hue value.
+    //  * @return The back hue (0-10).
+    //  */
+    // static uint8_t GetHueB();
 
     /**
      * @brief Sets which effect is selected if in isSecondary mode.
