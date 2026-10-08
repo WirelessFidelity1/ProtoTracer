@@ -1,4 +1,14 @@
 #include "ProtogenProjectTemplate.h"
+#include <Adafruit_NeoPixel.h>
+
+#define ANTENNA1_PIN 21
+// #define ANTENNA2_PIN 21
+#define ANTENNA_LED_COUNT 5
+
+Adafruit_NeoPixel antenna1(ANTENNA_LED_COUNT, ANTENNA1_PIN, NEO_GRB + NEO_KHZ800);
+// Adafruit_NeoPixel antenna2(ANTENNA_LED_COUNT, ANTENNA2_PIN, NEO_GRB + NEO_KHZ800);
+static uint8_t lastAntennaBrightness = 255;
+static uint8_t lastAntennaColor = 255;
 
 void ProtogenProject::LinkParameters(){
     eEA.AddParameter(&offsetFace, offsetFaceInd, 40, 0.0f, 1.0f);
@@ -89,8 +99,105 @@ void ProtogenProject::UpdateFace(float ratio) {
     Menu::Update(ratio);
 
     fanController.SetPWM(Menu::GetFanSpeed() * 25);
-    fanControllerExt.SetPWM(Menu::GetFanSpeed() * 25);
-    
+    fanControllerExt.SetPWM(Menu::GetFanExt() * 25);
+
+    uint8_t antennaBrightness = map(Menu::GetAccentBrightness(), 0, 10, 0, 255);
+    uint8_t antennaColor = Menu::GetAccentColor();
+
+    if (antennaBrightness != lastAntennaBrightness ||
+        antennaColor != lastAntennaColor)
+    {
+        // Calculate RGB
+        // Set both strips
+        // show()
+        //       uint8_t antennaBrightness = map(Menu::GetAccentBrightness(), 0, 10, 0, 255);
+        // uint8_t antennaColor = Menu::GetAccentColor();
+
+        uint8_t r = 0;
+        uint8_t g = 0;
+        uint8_t b = 0;
+
+        switch (antennaColor)
+        {
+        case 1: // YELLOW
+            r = 255;
+            g = 255;
+            b = 0;
+            break;
+
+        case 2: // ORANGE
+            r = 255;
+            g = 100;
+            b = 0;
+            break;
+
+        case 3: // WHITE
+            r = 255;
+            g = 255;
+            b = 255;
+            break;
+
+        case 4: // GREEN
+            r = 0;
+            g = 255;
+            b = 0;
+            break;
+
+        case 5: // PURPLE
+            r = 128;
+            g = 0;
+            b = 128;
+            break;
+
+        case 6: // RED
+            r = 255;
+            g = 0;
+            b = 0;
+            break;
+
+        case 7: // BLUE
+            r = 0;
+            g = 0;
+            b = 255;
+            break;
+
+        default:
+            // GRDIENT / RAINBOW / NOISE for now
+            r = 0;
+            g = 0;
+            b = 0;
+            break;
+        }
+
+        // Apply antenna brightness
+        r = (r * antennaBrightness) / 255;
+        g = (g * antennaBrightness) / 255;
+        b = (b * antennaBrightness) / 255;
+
+        // Top LED = red, also controlled by ANTNA brightness
+        uint8_t red = antennaBrightness;
+
+        for (uint8_t i = 0; i < ANTENNA_LED_COUNT; i++)
+        {
+            if (i == ANTENNA_LED_COUNT-1)
+            {
+                antenna1.setPixelColor(i, red, 0, 0);
+                // antenna2.setPixelColor(i, red, 0, 0);
+            }
+            else
+            {
+                antenna1.setPixelColor(i, r, g, b);
+                // antenna2.setPixelColor(i, r, g, b);
+            }
+        }
+
+        antenna1.show();
+        // antenna2.show();
+
+        lastAntennaBrightness = antennaBrightness;
+        lastAntennaColor = antennaColor;
+    }
+
     xOffset = fGenMatXMove.Update();
     yOffset = fGenMatYMove.Update();
     
@@ -119,14 +226,14 @@ void ProtogenProject::UpdateFace(float ratio) {
     oSC.SetHueAngle(ratio * 360.0f * 8.0f);
     
     SetMaterialColor();
-    RGBColor hueFront = RGBColor(255, 0, 0).HueShift(Menu::GetHueF() * 36);
+    // RGBColor hueFront = RGBColor(255, 0, 0).HueShift(Menu::GetA() * 36);
     // RGBColor hueBack  = RGBColor(255, 0, 0).HueShift(Menu::GetHueB() * 36);
 
-    gradientSpectrum[0] = hueFront;
+    // gradientSpectrum[0] = hueFront;
     // gradientSpectrum[1] = hueBack;
     gradientMat.UpdateGradient(gradientSpectrum);
 
-    flowNoise.SetGradient(hueFront, 0);
+    // flowNoise.SetGradient(hueFront, 0);
     // flowNoise.SetGradient(hueBack, 1);
 
     UpdateKeyFrameTracks();
@@ -564,6 +671,15 @@ void ProtogenProject::Initialize() {
 
     fanController.Initialize();
     fanControllerExt.Initialize();
+
+    antenna1.begin();
+    // antenna2.begin();
+
+    antenna1.clear();
+    // antenna2.clear();
+
+    antenna1.show();
+    // antenna2.show();
 
     MicrophoneFourier::Initialize(microphonePin, 8000, 50.0f, 120.0f);//8KHz sample rate, 50dB min, 120dB max
     

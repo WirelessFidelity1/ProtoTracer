@@ -33,7 +33,7 @@ uint8_t Menu::boopSensor = 0;
 uint8_t Menu::spectrumMirror = 0;
 uint8_t Menu::faceSize = 0;
 uint8_t Menu::color = 0;
-uint8_t Menu::huef = 0;
+uint8_t Menu::accentColor = 0;
 // uint8_t Menu::hueb = 0;
 uint8_t Menu::effect = 0;
 uint8_t Menu::fanSpeed = 0;
@@ -74,7 +74,7 @@ void Menu::SetMaxEntries() {
     MenuHandler<menuCount>::SetMenuMax(SpectrumMirror, 2);
     MenuHandler<menuCount>::SetMenuMax(FaceSize, 10);
     MenuHandler<menuCount>::SetMenuMax(Color, 10);
-    MenuHandler<menuCount>::SetMenuMax(HueF, 10);
+    MenuHandler<menuCount>::SetMenuMax(AccentColor, 10);
     // MenuHandler<menuCount>::SetMenuMax(HueB, 10);
     MenuHandler<menuCount>::SetMenuMax(EffectS, 10);
     MenuHandler<menuCount>::SetMenuMax(FanSpeed, 10);
@@ -92,7 +92,7 @@ void Menu::SetDefaultEntries() {
     MenuHandler<menuCount>::SetDefaultValue(SpectrumMirror, 1);
     MenuHandler<menuCount>::SetDefaultValue(FaceSize, 7);
     MenuHandler<menuCount>::SetDefaultValue(Color, 0);
-    MenuHandler<menuCount>::SetDefaultValue(HueF, 0);
+    MenuHandler<menuCount>::SetDefaultValue(AccentColor, 0);
     // MenuHandler<menuCount>::SetDefaultValue(HueB, 0);
     MenuHandler<menuCount>::SetDefaultValue(EffectS, 0);
     MenuHandler<menuCount>::SetDefaultValue(FanSpeed, 0);
@@ -371,7 +371,7 @@ void Menu::GenerateText() {
     line2 += MirrorSpectrumAnalyzer() ? "     on OFF " : "     ON off ";
     line2 += GenerateLine(10, GetFaceSize());
     line2 += GenerateLine(10, GetFaceColor());
-    line2 += GenerateLine(10, GetHueF());
+    line2 += GenerateLine(10, GetAccentColor());
     // line2 += GenerateLine(10, GetHueB());
     line2 += GenerateLine(10, GetEffectS());
     line2 += GenerateLine(10, GetFanSpeed());
@@ -461,13 +461,13 @@ uint8_t Menu::GetFaceColor() {
     else return MenuHandler<menuCount>::GetMenuValue(Color);
 }
 
-void Menu::SetHueF(uint8_t huef) {
-    Menu::huef = huef;
+void Menu::SetAccentColor(uint8_t accentColor) {
+    Menu::accentColor = accentColor;
 }
 
-uint8_t Menu::GetHueF() {
-    if (isSecondary) return huef;
-    else return MenuHandler<menuCount>::GetMenuValue(HueF);
+uint8_t Menu::GetAccentColor() {
+    if (isSecondary) return accentColor;
+    else return MenuHandler<menuCount>::GetMenuValue(AccentColor);
 }
 
 // void Menu::SetHueB(uint8_t hueb) {

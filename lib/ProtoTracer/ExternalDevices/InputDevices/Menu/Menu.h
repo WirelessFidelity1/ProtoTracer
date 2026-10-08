@@ -64,7 +64,7 @@ public:
         SpectrumMirror,  ///< Toggles mirror effect for SpectrumAnalyzer (on/off).
         FaceSize,        ///< Controls the size of the face mesh or display.
         Color,           ///< Controls the face color selection.
-        HueF,            ///< Controls the front hue value.
+        AccentColor,            ///< Controls the front hue value.
         // HueB,            ///< Controls the back hue value.
         EffectS,         ///< Controls which post-processing effect is active.
         FanSpeed,         ///< Controls the fan speed.
@@ -149,7 +149,7 @@ private:
     static uint8_t spectrumMirror;  ///< Spectrum mirroring toggle.
     static uint8_t faceSize;        ///< Face size setting.
     static uint8_t color;           ///< Current color setting.
-    static uint8_t huef;            ///< Front hue setting.
+    static uint8_t accentColor;            ///< Front hue setting.
     // static uint8_t hueb;            ///< Back hue setting.
     static uint8_t effect;          ///< Current effect index.
     static uint8_t fanSpeed;        ///< Fan speed setting.
@@ -444,15 +444,15 @@ public:
 
     /**
      * @brief Sets the front hue value if in isSecondary mode.
-     * @param huef The new front hue (0-10).
+     * @param AccentColor The new front hue (0-10).
      */
-    static void SetHueF(uint8_t huef);
+    static void SetAccentColor(uint8_t accentColor);
 
     /**
      * @brief Gets the front hue value.
      * @return The front hue (0-10).
      */
-    static uint8_t GetHueF();
+    static uint8_t GetAccentColor();
 
     // /**
     //  * @brief Sets the back hue value if in isSecondary mode.
