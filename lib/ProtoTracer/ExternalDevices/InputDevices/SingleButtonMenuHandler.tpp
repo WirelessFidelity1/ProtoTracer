@@ -33,6 +33,7 @@ bool MenuHandler<menuCount>::previousState2;
 
 template <uint8_t menuCount>
 void MenuHandler<menuCount>::UpdateState() {
+    if (ButtonHandler::GamesInputActive()) return;
 
     // Right Arrow = change current value
     if (ButtonHandler::GetRightPressed()) {

@@ -1,4 +1,5 @@
 #include "HUB75Controller.h"
+#include "../ExternalDevices/InputDevices/Menu/Games.h"
 
 //Macro calls from SmartMatrix library included in SmartMatrixHUB75
 SMARTMATRIX_ALLOCATE_BUFFERS(matrix, kMatrixWidth, kMatrixHeight, kRefreshDepth, kDmaBufferRows, kPanelType, kMatrixOptions);
@@ -38,6 +39,10 @@ void HUB75Controller::Display(){
             uint16_t pixelNum = y * 64 + x;
 
             rgb24 rgbColor = rgb24((uint16_t)camPixels->GetColor(pixelNum)->R, (uint16_t)camPixels->GetColor(pixelNum)->G, (uint16_t)camPixels->GetColor(pixelNum)->B);
+            if (Games::Instance().Active()) {
+                RGBColor gameColor = Games::Instance().Pixel(x, 31 - y);
+                rgbColor = rgb24(gameColor.R, gameColor.G, gameColor.B);
+            }
 
             backgroundLayer.drawPixel(x, (31 - y), rgbColor);
             backgroundLayer.drawPixel(63 - x, (31 - y) + 32, rgbColor);

@@ -21,6 +21,7 @@
 #include "ExternalDevices/InputDevices/ButtonHandler.h"
 
 #if defined(PROJECT_PROTOGEN_HUB75)
+    #include "ExternalDevices/InputDevices/Menu/Games.h"
     #include "Examples/Protogen/ProtogenHUB75Project.h"
     ProtogenHUB75Project project; ///< Instance of the Protogen HUB75 project.
 
@@ -74,6 +75,9 @@ void setup() {
 void loop() {
 
     ButtonHandler::UpdateUSB();
+    #if defined(PROJECT_PROTOGEN_HUB75)
+    Games::Instance().Update();
+    #endif
     #ifndef PROJECT_VERIFY_HARDWARE
     float ratio = (float)(millis() % 5000) / 5000.0f; ///< Calculates animation ratio based on time.
 

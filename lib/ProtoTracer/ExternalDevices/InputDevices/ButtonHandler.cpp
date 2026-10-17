@@ -11,6 +11,9 @@ USBHIDParser hid3(myusb);
 
 volatile bool ButtonHandler::rightPressed = false;
 volatile bool ButtonHandler::okPressed = false;
+volatile bool ButtonHandler::upPressed = false;
+volatile bool ButtonHandler::spacePressed = false;
+volatile bool ButtonHandler::gamesInputActive = false;
 
 long ButtonHandler::previousMillisISR;
 long ButtonHandler::previousMillisHold;
@@ -26,6 +29,10 @@ bool ButtonHandler::holdingState;
 // --------------------------------------------------
 
 void ButtonHandler::OnRawPress(uint8_t keycode) {
+    #if defined(PROJECT_PROTOGEN_HUB75)
+    if (keycode == 0x52) upPressed = true;
+    if (keycode == 0x2C) spacePressed = true;
+    #endif
 
     Serial.print("USB KEY: ");
     Serial.print(keycode);
@@ -97,6 +104,26 @@ bool ButtonHandler::GetOKPressed() {
     }
 
     return false;
+}
+
+bool ButtonHandler::GetUpPressed() {
+    bool pressed = upPressed;
+    upPressed = false;
+    return pressed;
+}
+
+bool ButtonHandler::GetSpacePressed() {
+    bool pressed = spacePressed;
+    spacePressed = false;
+    return pressed;
+}
+
+bool ButtonHandler::GamesInputActive() { return gamesInputActive || upPressed; }
+
+void ButtonHandler::SetGamesInputActive(bool active) {
+    rightPressed = false;
+    okPressed = false;
+    gamesInputActive = active;
 }
 
 

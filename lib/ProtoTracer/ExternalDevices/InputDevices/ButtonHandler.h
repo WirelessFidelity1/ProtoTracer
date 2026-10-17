@@ -30,6 +30,9 @@ private:
     // USB keyboard state
     static volatile bool rightPressed;
     static volatile bool okPressed;
+    static volatile bool upPressed;
+    static volatile bool spacePressed;
+    static volatile bool gamesInputActive;
 
     // USB keyboard callbacks
     static void OnRawPress(uint8_t keycode);
@@ -80,4 +83,8 @@ public:
      * The press is consumed when read.
      */
     static bool GetOKPressed();
+    static bool GetUpPressed();
+    static bool GetSpacePressed();
+    static bool GamesInputActive();
+    static void SetGamesInputActive(bool active);
 };
