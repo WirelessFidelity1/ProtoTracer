@@ -50,6 +50,7 @@
  */
 class Menu {
 public:
+    static void SetRenderMirrorX(bool enabled, float coordinateSum = 0.0f);
     /**
      * @enum MenuState
      * @brief Enumerates different parameter items or states in the menu.

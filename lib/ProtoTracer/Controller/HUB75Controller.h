@@ -25,7 +25,12 @@
  * functionality for initializing, controlling, and displaying content on HUB75 LED matrices.
  */
 class HUB75Controller : public Controller {
+private:
+    RGBColor secondPanelPixels[64 * 32];
+    bool useSecondPanelPixels = false;
 public:
+    void CaptureSecondPanel(const RGBColor* pixels);
+    void ClearSecondPanel() { useSecondPanelPixels = false; }
     /**
      * @brief Constructs a HUB75Controller with specified parameters.
      *

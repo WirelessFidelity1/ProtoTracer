@@ -6,6 +6,7 @@
 
 #include "../../Camera/CameraManager/Implementations/HUB75DeltaCameras.h"
 #include "../../Controller/HUB75Controller.h"
+#include "../../ExternalDevices/InputDevices/Menu/Games.h"
 
 class ProtogenHUB75Project : public ProtogenProject {
 private:
@@ -87,6 +88,23 @@ private:
 
     // use dummy 34 pin for button, using usb keyboard for input, so no button is needed
 public:
+    void Render() {
+        uint32_t start = micros();
+        controller.ClearSecondPanel();
+        // The menu slides down from above the camera. Render its visible portion
+        // with reflected text sampling, while leaving face geometry untouched.
+        if (!Games::Instance().Active() && Menu::GetPosition().Y < 96.0f) {
+            IPixelGroup* pixels = cameras.GetMainPixelGroup();
+            float coordinateSum = pixels->GetCoordinate(0).X + pixels->GetCoordinate(63).X;
+            Menu::SetRenderMirrorX(true, coordinateSum);
+            Project::Render();
+            controller.CaptureSecondPanel(pixels->GetColors());
+            Menu::SetRenderMirrorX(false);
+        }
+        Project::Render();
+        renderTime = (micros() - start) / 1000000.0f;
+    }
+
     ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 2, Vector2D(), Vector2D(192.0f, 94.0f), 22, 34, 9){
         scene.AddObject(pM.GetObject());
         scene.AddObject(deltaDisplayBackground.GetObject());

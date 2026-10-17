@@ -509,3 +509,7 @@ uint8_t Menu::GetFanExt() {
 float Menu::ShowMenu() {
     return showMenuRatio / 100.0f;
 }
+
+void Menu::SetRenderMirrorX(bool enabled, float coordinateSum) {
+    textEngine.SetMirrorX(enabled, coordinateSum);
+}

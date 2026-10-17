@@ -71,6 +71,7 @@ void TextEngine<lineCount, characterWidth>::ClearText() {
 template<uint8_t lineCount, uint8_t characterWidth>
 RGBColor TextEngine<lineCount, characterWidth>::GetRGB(const Vector3D& position, const Vector3D& normal, const Vector3D& uvw) {
     Vector3D positionL = position;
+    if (mirrorX) positionL.X = mirrorCoordinateSum - positionL.X;
     
     if(rotationAngle != 0 && !isEfficient){
         positionL = positionL - Vector3D(rotationOffset.X, rotationOffset.Y, 0);

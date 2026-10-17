@@ -44,8 +44,17 @@ void HUB75Controller::Display(){
                 rgbColor = rgb24(gameColor.R, gameColor.G, gameColor.B);
             }
 
-            backgroundLayer.drawPixel(x, (31 - y), rgbColor);
-            backgroundLayer.drawPixel(63 - x, (31 - y) + 32, rgbColor);
+            // Faces mirror across the visor; game text must read normally on both panels.
+            uint16_t secondPanelX = Games::Instance().Active() ? x : 63 - x;
+            rgb24 firstColor = rgbColor;
+            if (useSecondPanelPixels && !Games::Instance().Active()) {
+                // The reflected text pass belongs on the first physical panel.
+                // Both passes contain identical face geometry.
+                const RGBColor& color = secondPanelPixels[pixelNum];
+                firstColor = rgb24(color.R, color.G, color.B);
+            }
+            backgroundLayer.drawPixel(x, (31 - y), firstColor);
+            backgroundLayer.drawPixel(secondPanelX, (31 - y) + 32, rgbColor);
         }
     }
 
@@ -68,6 +77,11 @@ void HUB75Controller::SetBrightness(uint8_t maxBrightness){
     if(isOn){//past soft start
         this->brightness = maxBrightness * 25 + 5;
     }
+}
+
+void HUB75Controller::CaptureSecondPanel(const RGBColor* pixels) {
+    for (uint16_t i = 0; i < 64 * 32; ++i) secondPanelPixels[i] = pixels[i];
+    useSecondPanelPixels = true;
 }
 
 void HUB75Controller::SetAccentBrightness(uint8_t maxAccentBrightness){

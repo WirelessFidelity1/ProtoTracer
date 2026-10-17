@@ -23,8 +23,15 @@ private:
     char lines[lineCount][characterWidth];
     uint16_t blinkTime;
     bool isEfficient = false;
+    bool mirrorX = false;
+    float mirrorCoordinateSum = 0.0f;
 
 public:
+    // Reflect sampling before text placement, for a physically mirrored panel.
+    void SetMirrorX(bool enabled, float coordinateSum = 0.0f) {
+        mirrorX = enabled;
+        mirrorCoordinateSum = coordinateSum;
+    }
     TextEngine(bool isEfficient = false);
 
     TextEngine(Vector2D size, Vector2D position, uint16_t blinkTime, bool isEfficient = false);
