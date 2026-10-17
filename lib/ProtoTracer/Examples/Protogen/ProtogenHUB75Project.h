@@ -7,6 +7,8 @@
 #include "../../Camera/CameraManager/Implementations/HUB75DeltaCameras.h"
 #include "../../Controller/HUB75Controller.h"
 #include "../../ExternalDevices/InputDevices/Menu/Games.h"
+#include "../../Assets/Models/OBJ/DVD.h"
+#include "../../Renderer/Utils/Triangle2D.h"
 
 class ProtogenHUB75Project : public ProtogenProject {
 private:
@@ -14,8 +16,78 @@ private:
     HUB75Controller controller = HUB75Controller(&cameras, 50, 50);
     NukudeFace pM;
     DeltaDisplayBackground deltaDisplayBackground;
+    DVD dvd;
+    SimpleMaterial dvdMaterial = SimpleMaterial(RGBColor(30, 220, 255));
+    Vector2D dvdPosition = Vector2D(21, 15);
+    Vector2D dvdVelocity = Vector2D(27, 18);
+    uint32_t dvdPreviousTime = 0;
+    bool dvdWasVisible = false;
+    uint8_t dvdColor = 0;
+
+    void UpdateDVD(bool visible) {
+        uint32_t now = micros();
+        float dt = visible && dvdWasVisible ? fminf((now - dvdPreviousTime) / 1000000.0f, 0.1f) : 0;
+        dvdPreviousTime = now;
+        dvdWasVisible = visible;
+        if (!visible) { dvd.GetObject()->Disable(); return; }
+        dvd.GetObject()->Enable();
+        dvdPosition = dvdPosition + dvdVelocity * dt;
+        // Existing mesh bounds: X 0..96.4033, Y 22.86..68.0156.
+        const float scale = 0.75f;
+        const float maxX = 189.0f - 96.4033f * scale;
+        const float maxY = 93.0f - (68.0156f - 22.86f) * scale;
+        bool bounced = false;
+        if (dvdPosition.X < 0) { dvdPosition.X = -dvdPosition.X; dvdVelocity.X = fabsf(dvdVelocity.X); bounced = true; }
+        else if (dvdPosition.X > maxX) { dvdPosition.X = 2 * maxX - dvdPosition.X; dvdVelocity.X = -fabsf(dvdVelocity.X); bounced = true; }
+        if (dvdPosition.Y < 0) { dvdPosition.Y = -dvdPosition.Y; dvdVelocity.Y = fabsf(dvdVelocity.Y); bounced = true; }
+        else if (dvdPosition.Y > maxY) { dvdPosition.Y = 2 * maxY - dvdPosition.Y; dvdVelocity.Y = -fabsf(dvdVelocity.Y); bounced = true; }
+        if (bounced) {
+            dvdColor = (dvdColor + 1) % 6;
+            dvdMaterial.SetRGB(RGBColor(30, 220, 255));
+            dvdMaterial.HueShift(dvdColor * 60.0f);
+        }
+        dvd.GetObject()->ResetVertices();
+        dvd.GetObject()->GetTransform()->SetScale(Vector3D(scale, scale, 1));
+        dvd.GetObject()->GetTransform()->SetPosition(Vector3D(dvdPosition.X, dvdPosition.Y - 22.86f * scale, 0));
+        dvd.GetObject()->UpdateTransform();
+    }
+
+    void RenderDVD() {
+        // Rasterize the existing mesh only, with four coverage samples per LED.
+        // The normal face scene, effects, FFT and side-camera rendering are idle.
+        ITriangleGroup* group = dvd.GetObject()->GetTriangleGroup();
+        Triangle2D triangles[41];
+        for (uint16_t t = 0; t < 41; ++t) {
+            Triangle3D& mesh = group->GetTriangles()[t];
+            triangles[t] = Triangle2D(Vector2D(mesh.p1->X, mesh.p1->Y),
+                Vector2D(mesh.p2->X, mesh.p2->Y), Vector2D(mesh.p3->X, mesh.p3->Y));
+        }
+        RGBColor color = dvdMaterial.GetRGB(Vector3D(), Vector3D(), Vector3D());
+        for (uint8_t c = 0; c < 3; ++c) {
+            IPixelGroup* pixels = cameras.GetCameras()[c]->GetPixelGroup();
+            for (uint16_t i = 0; i < pixels->GetPixelCount(); ++i) *pixels->GetColor(i) = RGBColor(0,0,0);
+        }
+        IPixelGroup* pixels = cameras.GetMainPixelGroup();
+        int left = max(0, int(floorf(dvdPosition.X / 3.0f)) - 1);
+        int right = min(63, int(ceilf((dvdPosition.X + 96.4033f * 0.75f) / 3.0f)) + 1);
+        int bottom = max(0, int(floorf(dvdPosition.Y / 3.0f)) - 1);
+        int top = min(31, int(ceilf((dvdPosition.Y + 45.1556f * 0.75f) / 3.0f)) + 1);
+        for (int y = bottom; y <= top; ++y) for (int x = left; x <= right; ++x) {
+            uint8_t coverage = 0;
+            for (int sy = 0; sy < 2; ++sy) for (int sx = 0; sx < 2; ++sx) {
+                float px = x * 3.0f + (sx ? 0.75f : -0.75f);
+                float py = y * 3.0f + (sy ? 0.75f : -0.75f);
+                for (uint16_t t = 0; t < 41; ++t) {
+                    float u, v, w;
+                    if (triangles[t].DidIntersect(px, py, u, v, w)) { ++coverage; break; }
+                }
+            }
+            *pixels->GetColor(y * 64 + x) = RGBColor(color.R * coverage / 4,
+                color.G * coverage / 4, color.B * coverage / 4);
+        }
+    }
     
-	const __FlashStringHelper* faceArray[10] = {F("DEFAULT"), F("ANGRY"), F("DOUBT"), F("FROWN"), F("LOOKUP"), F("SAD"), F("AUDIO1"), F("AUDIO2"), F("AUDIO3")};
+	const __FlashStringHelper* faceArray[10] = {F("DEFAULT"), F("ANGRY"), F("DOUBT"), F("FROWN"), F("LOOKUP"), F("SAD"), F("AUDIO1"), F("AUDIO2"), F("AUDIO3"), F("DVD")};
 
     void LinkControlParameters() override {//Called from parent
         AddParameter(NukudeFace::Anger, pM.GetMorphWeightReference(NukudeFace::Anger), 15);
@@ -88,9 +160,19 @@ private:
 
     // use dummy 34 pin for button, using usb keyboard for input, so no button is needed
 public:
+    bool IsDVDVisible() {
+        return Menu::GetFaceState() == 9 && !Games::Instance().Active()
+            && Menu::GetCurrentMenu() == Menu::Faces && Menu::GetPosition().Y >= 96.0f;
+    }
+
     void Render() {
         uint32_t start = micros();
         controller.ClearSecondPanel();
+        if (IsDVDVisible()) {
+            RenderDVD();
+            renderTime = (micros() - start) / 1000000.0f;
+            return;
+        }
         // The menu slides down from above the camera. Render its visible portion
         // with reflected text sampling, while leaving face geometry untouched.
         if (!Games::Instance().Active() && Menu::GetPosition().Y < 96.0f) {
@@ -105,9 +187,12 @@ public:
         renderTime = (micros() - start) / 1000000.0f;
     }
 
-    ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 2, Vector2D(), Vector2D(192.0f, 94.0f), 22, 34, 9){
+    ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 3, Vector2D(), Vector2D(192.0f, 94.0f), 22, 34, 10){
         scene.AddObject(pM.GetObject());
         scene.AddObject(deltaDisplayBackground.GetObject());
+        scene.AddObject(dvd.GetObject());
+        dvd.GetObject()->SetMaterial(&dvdMaterial);
+        dvd.GetObject()->Disable();
 
         pM.GetObject()->SetMaterial(GetFaceMaterial());
         deltaDisplayBackground.GetObject()->SetMaterial(GetFaceMaterial());
@@ -125,12 +210,20 @@ public:
     }
 
     void Update(float ratio) override {
-        pM.Reset();
-
         uint8_t mode = Menu::GetFaceState();//change by button press
 
         controller.SetBrightness(Menu::GetBrightness());
         controller.SetAccentBrightness(Menu::GetAccentBrightness());
+
+        if (IsDVDVisible()) {
+            Menu::Update(ratio);
+            UpdateDVD(true);
+            pM.GetObject()->Disable();
+            deltaDisplayBackground.GetObject()->Disable();
+            return;
+        }
+
+        pM.Reset();
 
 #ifdef MORSEBUTTON
         SelectFaceFromMorse(mode);
@@ -139,6 +232,17 @@ public:
 #endif
 
         UpdateFace(ratio);
+
+        bool showDVD = mode == 9 && !Games::Instance().Active()
+            && Menu::GetCurrentMenu() == Menu::Faces && Menu::GetPosition().Y >= 96.0f;
+        UpdateDVD(showDVD);
+        if (showDVD) {
+            pM.GetObject()->Disable();
+            deltaDisplayBackground.GetObject()->Disable();
+        } else {
+            pM.GetObject()->Enable();
+            deltaDisplayBackground.GetObject()->Enable();
+        }
 
         pM.Update();
 
@@ -149,7 +253,7 @@ public:
     }
 
     void SelectFace(uint8_t code) {
-        if (IsBooped() && code != 6) {
+        if (IsBooped() && code != 6 && code != 9) {
             Surprised();
             return;
         }
@@ -163,6 +267,7 @@ public:
             case 5: Sad();      break;
             case 6: AudioReactiveGradientFace();    break;
             case 7: OscilloscopeFace();             break;
+            case 9: Default();                      break; // DVD mesh visibility is handled in Update.
             default: SpectrumAnalyzerFace();        break;
         }
     }

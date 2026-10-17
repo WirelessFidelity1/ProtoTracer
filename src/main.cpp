@@ -77,6 +77,15 @@ void loop() {
     ButtonHandler::UpdateUSB();
     #if defined(PROJECT_PROTOGEN_HUB75)
     Games::Instance().Update();
+    // Keep servicing USB while pacing the DVD screensaver at 60 frames/second.
+    static uint32_t dvdFrameTime = 0;
+    if (project.IsDVDVisible()) {
+        uint32_t now = micros();
+        if (now - dvdFrameTime < 16667u) return;
+        dvdFrameTime = now - dvdFrameTime < 33334u ? dvdFrameTime + 16667u : now;
+    } else {
+        dvdFrameTime = micros();
+    }
     #endif
     #ifndef PROJECT_VERIFY_HARDWARE
     float ratio = (float)(millis() % 5000) / 5000.0f; ///< Calculates animation ratio based on time.

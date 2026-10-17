@@ -1,5 +1,6 @@
 #include "HUB75Controller.h"
 #include "../ExternalDevices/InputDevices/Menu/Games.h"
+#include "../ExternalDevices/InputDevices/Menu/Menu.h"
 
 //Macro calls from SmartMatrix library included in SmartMatrixHUB75
 SMARTMATRIX_ALLOCATE_BUFFERS(matrix, kMatrixWidth, kMatrixHeight, kRefreshDepth, kDmaBufferRows, kPanelType, kMatrixOptions);
@@ -33,6 +34,8 @@ void HUB75Controller::Display(){
     IPixelGroup* camPixels = cameras->GetCameras()[0]->GetPixelGroup();
     IPixelGroup* camSidePixelsL = cameras->GetCameras()[1]->GetPixelGroup();
     IPixelGroup* camSidePixelsR = cameras->GetCameras()[2]->GetPixelGroup();
+    bool showDVD = Menu::GetFaceState() == 9 && !Games::Instance().Active()
+        && Menu::GetCurrentMenu() == Menu::Faces && Menu::GetPosition().Y >= 96.0f;
 
     for (uint16_t y = 0; y < 32; y++) {
         for (uint16_t x = 0; x < 64; x++){
@@ -45,9 +48,9 @@ void HUB75Controller::Display(){
             }
 
             // Faces mirror across the visor; game text must read normally on both panels.
-            uint16_t secondPanelX = Games::Instance().Active() ? x : 63 - x;
+            uint16_t secondPanelX = Games::Instance().Active() || showDVD ? x : 63 - x;
             rgb24 firstColor = rgbColor;
-            if (useSecondPanelPixels && !Games::Instance().Active()) {
+            if (useSecondPanelPixels && !Games::Instance().Active() && !showDVD) {
                 // The reflected text pass belongs on the first physical panel.
                 // Both passes contain identical face geometry.
                 const RGBColor& color = secondPanelPixels[pixelNum];
