@@ -12,6 +12,8 @@ USBHIDParser hid3(myusb);
 
 volatile bool ButtonHandler::rightPressed = false;
 volatile bool ButtonHandler::leftPressed = false;
+volatile bool ButtonHandler::bPressed = false;
+bool ButtonHandler::bHeld = false;
 volatile bool ButtonHandler::okPressed = false;
 volatile bool ButtonHandler::upPressed = false;
 volatile bool ButtonHandler::spacePressed = false;
@@ -32,6 +34,7 @@ bool ButtonHandler::holdingState;
 
 void ButtonHandler::OnRawPress(uint8_t keycode) {
     #if defined(PROJECT_PROTOGEN_HUB75)
+    if (keycode == 0x05 && !bHeld) { bHeld = true; bPressed = true; }
     if (keycode == 0x52) upPressed = true;
     if (keycode == 0x2C) spacePressed = true;
     #endif
@@ -55,7 +58,7 @@ void ButtonHandler::OnRawPress(uint8_t keycode) {
 }
 
 void ButtonHandler::OnRawRelease(uint8_t keycode) {
-    // Nothing needed for menu presses
+    if (keycode == 0x05) bHeld = false;
 }
 
 
@@ -143,7 +146,13 @@ bool ButtonHandler::GetSpacePressed() {
     return pressed;
 }
 
-bool ButtonHandler::GamesInputActive() { return gamesInputActive || upPressed; }
+bool ButtonHandler::GetBPressed() {
+    bool pressed = bPressed;
+    bPressed = false;
+    return pressed;
+}
+
+bool ButtonHandler::GamesInputActive() { return gamesInputActive || upPressed || bPressed; }
 
 void ButtonHandler::SetGamesInputActive(bool active) {
     rightPressed = false;

@@ -13,6 +13,7 @@ class Games {
     static constexpr int VisibleWidth = 51; // 13 of 64 columns (~20%) stay black.
 
     enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback };
+    bool bsod = false;
     uint8_t selectedGame = 0;
     uint8_t selectedMovie = 0;
     float paddleY = 16, aiY = 16;
@@ -122,7 +123,7 @@ class Games {
         for (int yy = y; yy < y+h; ++yy)
             for (int xx = x; xx < x+w; ++xx)
                 if (xx >= 0 && xx < 64 && yy >= 0 && yy < 32)
-                    pixels[yy*64 + xx*VisibleWidth/64] = c;
+                    pixels[yy*64 + xx*(bsod ? 64 : VisibleWidth)/64] = c;
     }
     void SymbolDraw(int name, int cx, int cy) {
         int x = cx-7, y = cy-7;
@@ -181,6 +182,31 @@ class Games {
                 if (glyphs[found-letters][yy] & (16 >> xx)) Rect(x+xx*scale,y+yy*scale,scale,scale,c);
         }
     }
+    void BSODText(const char* text, int y) {
+        // Compact fixed-width type for the blue-screen message.
+        static const char letters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .:_*";
+        static const uint8_t glyphs[][5] = {
+            {2,5,7,5,5},{6,5,6,5,6},{3,4,4,4,3},{6,5,5,5,6},
+            {7,4,6,4,7},{7,4,6,4,4},{3,4,5,5,3},{5,5,7,5,5},
+            {7,2,2,2,7},{1,1,1,5,2},{5,5,6,5,5},{4,4,4,4,7},
+            {5,7,7,5,5},{5,7,7,7,5},{2,5,5,5,2},{6,5,6,4,4},
+            {2,5,5,3,1},{6,5,6,5,5},{3,4,2,1,6},{7,2,2,2,2},
+            {5,5,5,5,7},{5,5,5,5,2},{5,5,7,7,5},{5,5,2,5,5},
+            {5,5,2,2,2},{7,1,2,4,7},
+            {7,5,5,5,7},{2,6,2,2,7},{6,1,2,4,7},{6,1,2,1,6},
+            {5,5,7,1,1},{7,4,6,1,6},{3,4,6,5,2},{7,1,2,2,2},
+            {2,5,2,5,2},{2,5,3,1,6},
+            {0,0,0,0,0},{0,0,0,0,2},{0,2,0,2,0},{0,0,0,0,7},{0,5,2,5,0}
+        };
+        for (int x = 1; *text; ++text, x += 4) {
+            const char* found = strchr(letters, *text);
+            if (!found) continue;
+            for (int row = 0; row < 5; ++row) for (int col = 0; col < 3; ++col)
+                if (glyphs[found-letters][row] & (4 >> col))
+                    Rect(x+col,y+row,1,1,RGBColor(255,255,255));
+        }
+    }
+
     void Spin() {
         if (spinning) return;
         spinning = true; elapsed = 0; banner = 0;
@@ -192,13 +218,21 @@ class Games {
     }
 public:
     static Games& Instance() { static Games games; return games; }
-    bool Active() const { return screen != Faces; }
-    bool DVDActive() const { return screen == MoviePlayback && selectedMovie == 0; }
+    bool Active() const { return bsod || screen != Faces; }
+    bool BSODActive() const { return bsod; }
+    RGBColor PreviewPixel(int x, int y) const {
+        RGBColor color = Pixel(x, y);
+        // Keep the white joke text legible on the monochrome preview.
+        return bsod && color.R < 128 ? black : color;
+    }
+    bool DVDActive() const { return !bsod && screen == MoviePlayback && selectedMovie == 0; }
     RGBColor Pixel(int x, int y, bool rearOnLeft = false) const {
+        // The blue screen fills both physical panels, including the game margin.
+        if (bsod) return x >= 0 && x < 64 && y >= 0 && y < 32 ? pixels[y*64+x] : black;
         // Translate the same game to the front of either physical panel.
         int localX = x - (rearOnLeft ? 64-VisibleWidth : 0);
         if (localX < 0 || localX >= VisibleWidth) return black;
-        if (screen == MoviePlayback && selectedMovie != 0) return Movies::Pixel(localX, y);
+        if (!bsod && screen == MoviePlayback && selectedMovie != 0) return Movies::Pixel(localX, y);
         return pixels[y*64+localX];
     }
     void Update() {
@@ -213,6 +247,30 @@ public:
         bool mouseConnected = ButtonHandler::ReadMouse(mouseX, mouseY, mouseButtons);
         bool mouseClick = (mouseButtons & 1) && !(previousMouseButtons & 1);
         previousMouseButtons = mouseButtons;
+        bool toggleBSOD = ButtonHandler::GetBPressed();
+        if (toggleBSOD) {
+            bsod = !bsod;
+            ButtonHandler::SetGamesInputActive(Active());
+            up = space = false;
+        }
+        if (bsod) {
+            ButtonHandler::GetRightPressed();
+            ButtonHandler::GetLeftPressed();
+            ButtonHandler::GetOKPressed();
+            Rect(0,0,64,32,RGBColor(0,120,215));
+            // Large :( face, like the Windows 8 crash screen.
+            Rect(3,2,2,2,white);
+            Rect(3,8,2,2,white);
+            Rect(11,1,2,2,white);
+            Rect(9,3,2,2,white);
+            Rect(8,5,2,4,white);
+            Rect(9,9,2,2,white);
+            Rect(11,11,2,2,white);
+            BSODText("YOUR PC RAN INTO",15);
+            BSODText("A BOOP PROBLEM.",21);
+            BSODText("B: RESTART",27);
+            return;
+        }
         if (up) {
             if (screen == Faces) randomSeed(micros());
             screen = screen == Faces ? Selection : screen == MoviePlayback ? MovieSelection

@@ -17,3 +17,6 @@ palettes are preserved. Playback loops at approximately 24 fps; DVD keeps its
 existing 60 fps animation. Other source assets remain available in the repository
 but are excluded from the picker and packed data. The generator verifies each frame's size,
 palette indices, and compression round trip.
+
+Press B on any screen to toggle a full-panel Windows 8-style joke blue screen with a sad face and boop error message.
+Press B again to return to the previous screen. Holding B does not retrigger it.

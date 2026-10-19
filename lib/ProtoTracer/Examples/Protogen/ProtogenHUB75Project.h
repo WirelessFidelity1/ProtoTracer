@@ -169,7 +169,7 @@ public:
         IPixelGroup* pixels = cameras.GetMainPixelGroup();
         bool activity = Games::Instance().Active() && !IsDVDVisible();
         for (uint16_t y = 0; y < 32; ++y) for (uint16_t x = 0; x < 64; ++x) {
-            frame[y * 64 + x] = activity ? Games::Instance().Pixel(x, y)
+            frame[y * 64 + x] = activity ? Games::Instance().PreviewPixel(x, y)
                 : *pixels->GetColor((31 - y) * 64 + x);
         }
         hud.SetPreviewFrame(frame);
