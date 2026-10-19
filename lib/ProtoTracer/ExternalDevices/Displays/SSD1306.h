@@ -59,7 +59,7 @@ private:
     bool useExternalFace = false; ///< To decide if it uses faceArray or faceNames for the face
 
     Effect* subEffect; ///< Used to capture the complete rendered frame
-    TimeStep timeStep = TimeStep(5); ///< Limits the display to update 5 times per second
+    TimeStep timeStep = TimeStep(10); ///< Targets 10 updates per second when frames are available.
     bool didBegin = false; ///< True if the I2C interface started correctly
     bool splashFinished = false; ///< True when the splash startup screen is finished
     Vector2D faceMin; ///< Minimum coordinate for face on display
