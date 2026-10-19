@@ -168,9 +168,10 @@ public:
         RGBColor frame[64 * 32];
         IPixelGroup* pixels = cameras.GetMainPixelGroup();
         bool activity = Games::Instance().Active() && !IsDVDVisible();
+        bool mirrorFace = !Games::Instance().Active();
         for (uint16_t y = 0; y < 32; ++y) for (uint16_t x = 0; x < 64; ++x) {
             frame[y * 64 + x] = activity ? Games::Instance().PreviewPixel(x, y)
-                : *pixels->GetColor((31 - y) * 64 + x);
+                : *pixels->GetColor((31 - y) * 64 + (mirrorFace ? 63 - x : x));
         }
         hud.SetPreviewFrame(frame);
         hud.Update();
