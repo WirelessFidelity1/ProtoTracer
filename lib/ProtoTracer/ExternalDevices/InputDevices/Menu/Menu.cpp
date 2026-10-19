@@ -385,8 +385,9 @@ void Menu::SetFaceState(uint8_t faceState) {
 }
 
 uint8_t Menu::GetFaceState() {
-    if (isSecondary) return faceState;
-    else return MenuHandler<menuCount>::GetMenuValue(Faces);
+    uint8_t value = isSecondary ? faceState : MenuHandler<menuCount>::GetMenuValue(Faces);
+    // Saved selections can outlive a project's face list (e.g. the former DVD face).
+    return value < faceCount ? value : 0;
 }
 
 void Menu::SetBrightness(uint8_t bright) {

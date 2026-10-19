@@ -87,7 +87,7 @@ private:
         }
     }
     
-	const __FlashStringHelper* faceArray[10] = {F("DEFAULT"), F("ANGRY"), F("DOUBT"), F("FROWN"), F("LOOKUP"), F("SAD"), F("AUDIO1"), F("AUDIO2"), F("AUDIO3"), F("DVD")};
+	const __FlashStringHelper* faceArray[9] = {F("DEFAULT"), F("ANGRY"), F("DOUBT"), F("FROWN"), F("LOOKUP"), F("SAD"), F("AUDIO1"), F("AUDIO2"), F("AUDIO3")};
 
     void LinkControlParameters() override {//Called from parent
         AddParameter(NukudeFace::Anger, pM.GetMorphWeightReference(NukudeFace::Anger), 15);
@@ -161,8 +161,7 @@ private:
     // use dummy 34 pin for button, using usb keyboard for input, so no button is needed
 public:
     bool IsDVDVisible() {
-        return Menu::GetFaceState() == 9 && !Games::Instance().Active()
-            && Menu::GetCurrentMenu() == Menu::Faces && Menu::GetPosition().Y >= 96.0f;
+        return Games::Instance().DVDActive();
     }
 
     void Render() {
@@ -187,7 +186,7 @@ public:
         renderTime = (micros() - start) / 1000000.0f;
     }
 
-    ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 3, Vector2D(), Vector2D(192.0f, 94.0f), 22, 34, 10){
+    ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 3, Vector2D(), Vector2D(192.0f, 94.0f), 22, 34, 9){
         scene.AddObject(pM.GetObject());
         scene.AddObject(deltaDisplayBackground.GetObject());
         scene.AddObject(dvd.GetObject());
@@ -233,8 +232,7 @@ public:
 
         UpdateFace(ratio);
 
-        bool showDVD = mode == 9 && !Games::Instance().Active()
-            && Menu::GetCurrentMenu() == Menu::Faces && Menu::GetPosition().Y >= 96.0f;
+        bool showDVD = IsDVDVisible();
         UpdateDVD(showDVD);
         if (showDVD) {
             pM.GetObject()->Disable();
@@ -253,7 +251,7 @@ public:
     }
 
     void SelectFace(uint8_t code) {
-        if (IsBooped() && code != 6 && code != 9) {
+        if (IsBooped() && code != 6) {
             Surprised();
             return;
         }
@@ -267,7 +265,6 @@ public:
             case 5: Sad();      break;
             case 6: AudioReactiveGradientFace();    break;
             case 7: OscilloscopeFace();             break;
-            case 9: Default();                      break; // DVD mesh visibility is handled in Update.
             default: SpectrumAnalyzerFace();        break;
         }
     }

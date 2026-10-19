@@ -29,6 +29,7 @@ private:
 
     // USB keyboard state
     static volatile bool rightPressed;
+    static volatile bool leftPressed;
     static volatile bool okPressed;
     static volatile bool upPressed;
     static volatile bool spacePressed;
@@ -72,11 +73,15 @@ public:
      */
     static void UpdateUSB();
 
+    // Consume relative mouse motion; return whether a mouse is connected.
+    static bool ReadMouse(int& x, int& y, uint8_t& buttons);
+
     /**
      * @brief Returns true when a Right Arrow press occurred.
      * The press is consumed when read.
      */
     static bool GetRightPressed();
+    static bool GetLeftPressed();
 
     /**
      * @brief Returns true when an Enter/OK press occurred.

@@ -35,8 +35,10 @@ template <uint8_t menuCount>
 void MenuHandler<menuCount>::UpdateState() {
     if (ButtonHandler::GamesInputActive()) return;
 
-    // Right Arrow = change current value
-    if (ButtonHandler::GetRightPressed()) {
+    bool right = ButtonHandler::GetRightPressed();
+    bool left = ButtonHandler::GetLeftPressed();
+    // Arrows cycle values in either direction, wrapping at the ends.
+    if (right && !left) {
 
         currentValue[currentMenu]++;
 
@@ -44,6 +46,12 @@ void MenuHandler<menuCount>::UpdateState() {
             currentValue[currentMenu] = 0;
     }
 
+
+    if (left && !right && maxValue[currentMenu]) {
+        currentValue[currentMenu] = currentValue[currentMenu] == 0
+            || currentValue[currentMenu] >= maxValue[currentMenu]
+            ? maxValue[currentMenu] - 1 : currentValue[currentMenu] - 1;
+    }
 
     // OK / Enter = save and change menu
     if (ButtonHandler::GetOKPressed()) {

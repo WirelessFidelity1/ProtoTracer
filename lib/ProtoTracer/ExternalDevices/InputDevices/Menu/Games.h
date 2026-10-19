@@ -4,11 +4,99 @@
 #include <math.h>
 #include <string.h>
 #include "../ButtonHandler.h"
+#include "Movies.h"
 #include "../../../Utils/RGBColor.h"
 
-// A native 64x32 canvas. No allocation or blocking delays during animation.
+// Games use a logical 64x32 canvas fitted into the uncovered panel area.
+// No allocation or blocking delays during animation.
 class Games {
-    enum Screen { Faces, Selection, Slots };
+    static constexpr int VisibleWidth = 51; // 13 of 64 columns (~20%) stay black.
+
+    enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback };
+    uint8_t selectedGame = 0;
+    uint8_t selectedMovie = 0;
+    float paddleY = 16, aiY = 16;
+    float ballX = 31, ballY = 16, ballVX = 24, ballVY = 9;
+    uint8_t playerScore = 0, aiScore = 0, previousMouseButtons = 0;
+    bool serving = true;
+    float serveDelay = 1.0f;
+
+    void Serve(bool towardPlayer) {
+        ballX = 31; ballY = 16;
+        ballVX = towardPlayer ? -24 : 24;
+        ballVY = random(0, 2) ? 9 : -9;
+        serving = true;
+        serveDelay = 1.0f;
+    }
+    void ResetPong() {
+        paddleY = aiY = 16;
+        playerScore = aiScore = 0;
+        Serve(false);
+    }
+    void ScoreDigit(uint8_t digit, int x, RGBColor color) {
+        static const uint8_t rows[8][5] = {
+            {7,5,5,5,7}, {2,6,2,2,7}, {7,1,7,4,7}, {7,1,7,1,7},
+            {5,5,7,1,1}, {7,4,7,1,7}, {7,4,7,5,7}, {7,1,1,1,1}
+        };
+        for (int y=0; y<5; ++y) for (int bit=0; bit<3; ++bit)
+            if (rows[digit][y] & (4 >> bit)) Rect(x+bit*2,y+1,2,1,color);
+    }
+    void UpdatePong(float dt, int mouseY, bool connected, bool launch) {
+        paddleY = fmaxf(9, fminf(28, paddleY + mouseY * 0.25f));
+        bool finished = playerScore == 7 || aiScore == 7;
+        if (launch && connected) {
+            if (finished) { ResetPong(); finished = false; }
+            serving = false;
+        }
+        if (connected && serving && !finished) {
+            serveDelay = fmaxf(0, serveDelay-dt);
+            if (serveDelay <= 0) serving = false;
+        }
+        // Freeze the rally when the mouse is unplugged.
+        if (connected && !serving && !finished) {
+            // Small steps keep the ball from skipping a paddle on slow frames.
+            for (float remaining = dt; remaining > 0;) {
+                float step = fminf(remaining, 0.005f);
+                remaining -= step;
+                float target = ballVX > 0 ? ballY : 18.5f;
+                aiY += fmaxf(-17*step, fminf(17*step, target-aiY));
+                aiY = fmaxf(9, fminf(28, aiY));
+                float oldX = ballX;
+                ballX += ballVX*step; ballY += ballVY*step;
+                if (ballY < 6) { ballY = 12-ballY; ballVY = fabsf(ballVY); }
+                if (ballY > 31) { ballY = 62-ballY; ballVY = -fabsf(ballVY); }
+                if (ballVX < 0 && oldX >= 4 && ballX < 4 && fabsf(ballY-paddleY) <= 4) {
+                    ballX = 4;
+                    ballVX = fminf(46, fabsf(ballVX)+2);
+                    ballVY = (ballY-paddleY)*5;
+                } else if (ballVX > 0 && oldX <= 59 && ballX > 59 && fabsf(ballY-aiY) <= 4) {
+                    ballX = 59;
+                    ballVX = -fminf(46, fabsf(ballVX)+2);
+                    ballVY = (ballY-aiY)*5;
+                }
+                if (ballX < 0 || ballX > 63) {
+                    bool missed = ballX < 0;
+                    if (missed) ++aiScore; else ++playerScore;
+                    Serve(missed);
+                    break;
+                }
+            }
+        }
+        for (int y=7; y<32; y+=3) Rect(31,y,1,2,RGBColor(30,35,40));
+        Rect(0,6,64,1,RGBColor(30,35,40));
+        ScoreDigit(playerScore,20,green); ScoreDigit(aiScore,38,gold);
+        Rect(2,lroundf(paddleY)-3,2,7,green);
+        Rect(60,lroundf(aiY)-3,2,7,gold);
+        Rect(lroundf(ballX),lroundf(ballY),1,1,white);
+        if (!connected) {
+            Rect(7,11,49,9,black); Text("NO MOUSE",8,12,1,gold);
+        } else if (playerScore == 7 || aiScore == 7) {
+            Rect(7,11,49,9,black);
+            Text(playerScore == 7 ? "WIN" : "LOSE",playerScore == 7 ? 23 : 20,12,1,white);
+        } else if (serving) {
+            Text("PONG",20,13,1,white);
+        }
+    }
     Screen screen = Faces;
     RGBColor pixels[64 * 32];
     float pos[3] = {0, 3, 6};
@@ -33,37 +121,58 @@ class Games {
     void Rect(int x, int y, int w, int h, RGBColor c) {
         for (int yy = y; yy < y+h; ++yy)
             for (int xx = x; xx < x+w; ++xx)
-                if (xx >= 0 && xx < 64 && yy >= 0 && yy < 32) pixels[yy*64+xx] = c;
+                if (xx >= 0 && xx < 64 && yy >= 0 && yy < 32)
+                    pixels[yy*64 + xx*VisibleWidth/64] = c;
     }
     void SymbolDraw(int name, int cx, int cy) {
         int x = cx-7, y = cy-7;
-        RGBColor c = name == 0 ? RGBColor(65,145,240) : name == 1 ? RGBColor(60,220,230) : name == 2 ? RGBColor(235,60,60) : gold;
+        const RGBColor red(235,45,55);
         if (name == 0) {
-            Rect(x+5,y+7,6,6,c); Rect(x+3,y+9,2,3,c); Rect(x+11,y+9,2,3,c);
-            Rect(x+1,y+3,3,4,c); Rect(x+5,y+1,3,4,c); Rect(x+10,y+2,3,4,c);
-            Rect(x+12,y+6,2,3,c); Rect(x+7,y+8,1,1,white);
+            // Classic BAR plaque with compact 3x5 lettering.
+            Rect(x,y+3,15,9,white); Rect(x+1,y+4,13,7,black);
+            static const uint8_t bar[3][5] = {
+                {6,5,6,5,6}, {2,5,7,5,5}, {6,5,6,5,5}
+            };
+            for (int letter=0; letter<3; ++letter)
+                for (int row=0; row<5; ++row) for (int col=0; col<3; ++col)
+                    if (bar[letter][row] & (4 >> col))
+                        Rect(x+2+letter*4+col,y+5+row,1,1,white);
         } else if (name == 1) {
-            Rect(x+1,y+1,13,10,c); Rect(x+3,y+3,9,6,black); Rect(x+4,y+4,5,1,white);
-            Rect(x+4,y+6,3,1,green); Rect(x+10,y+7,1,1,white);
-            Rect(x+6,y+11,3,2,c); Rect(x+3,y+13,9,2,c);
+            // Gold bell, flared rim, and clapper.
+            Rect(x+6,y+1,3,2,gold); Rect(x+4,y+3,7,2,gold);
+            Rect(x+3,y+5,9,5,gold); Rect(x+2,y+10,11,2,gold);
+            Rect(x+1,y+12,13,1,gold); Rect(x+6,y+13,3,2,gold);
+            Rect(x+4,y+5,1,5,white);
         } else if (name == 2) {
-            Rect(x+4,y+4,8,9,c); Rect(x+2,y+6,12,5,c); Rect(x+5,y+2,5,2,c);
-            Rect(x+8,y,2,3,green); Rect(x+10,y+1,4,2,green);
-            Rect(x+4,y+6,1,1,white); Rect(x+6,y+13,4,1,c);
+            // Two red cherries hanging from joined green stems.
+            Rect(x+7,y+1,2,2,green); Rect(x+5,y+3,2,3,green);
+            Rect(x+3,y+6,2,3,green); Rect(x+9,y+3,1,5,green);
+            Rect(x+9,y+1,4,2,green);
+            Rect(x+1,y+9,6,4,red); Rect(x+2,y+8,4,6,red);
+            Rect(x+8,y+9,6,4,red); Rect(x+9,y+8,4,6,red);
+            Rect(x+2,y+9,1,2,white); Rect(x+9,y+9,1,2,white);
         } else {
-            Rect(x+3,y+3,9,2,gold); Rect(x+2,y+5,11,6,gold); Rect(x,y+11,15,3,gold);
-            Rect(x+4,y+6,7,3,RGBColor(245,135,40)); Rect(x+5,y+6,5,1,white); Rect(x+2,y+12,1,1,white);
+            // Lucky red seven.
+            Rect(x+2,y+1,12,3,red); Rect(x+2,y+4,3,2,red);
+            Rect(x+10,y+4,3,2,red); Rect(x+9,y+6,3,2,red);
+            Rect(x+7,y+8,3,2,red); Rect(x+6,y+10,3,4,red);
+            Rect(x+3,y+1,10,1,white);
         }
     }
+
     void Text(const char* text, int x, int y, int scale, RGBColor c) {
         // Five-bit rows of the original block font, plus menu glyphs.
-        static const char letters[] = "WINLOSEGAM PCT";
+        static const char letters[] = "WINLOSEGAM PCTURHDVBFXY2K31";
         static const uint8_t glyphs[][7] = {
             {17,17,21,21,21,27,17},{31,4,4,4,4,4,31},{17,25,25,21,19,19,17},
             {16,16,16,16,16,16,31},{14,17,17,17,17,17,14},{15,16,16,14,1,1,30},
             {31,16,16,30,16,16,31},{14,17,16,23,17,17,14},{14,17,17,31,17,17,17},
             {17,27,21,21,17,17,17},{0,0,0,0,0,0,0},{30,17,17,30,16,16,16},
-            {14,17,16,16,16,17,14},{31,4,4,4,4,4,4}
+            {14,17,16,16,16,17,14},{31,4,4,4,4,4,4},
+            {17,17,17,17,17,17,14},{30,17,17,30,20,18,17},{17,17,17,31,17,17,17},
+            {30,17,17,17,17,17,30},{17,17,17,17,17,10,4},{30,17,17,30,17,17,30},
+            {31,16,16,30,16,16,16},{17,17,10,4,10,17,17},{17,17,10,4,4,4,4},
+            {14,17,1,2,4,8,31},{17,18,20,24,20,18,17},{30,1,1,14,1,1,30},{4,12,4,4,4,4,14}
         };
         for (; *text; ++text, x += 6*scale) {
             const char* found = strchr(letters, *text);
@@ -84,7 +193,14 @@ class Games {
 public:
     static Games& Instance() { static Games games; return games; }
     bool Active() const { return screen != Faces; }
-    RGBColor Pixel(int x, int y) const { return pixels[y*64+x]; }
+    bool DVDActive() const { return screen == MoviePlayback && selectedMovie == 0; }
+    RGBColor Pixel(int x, int y, bool rearOnLeft = false) const {
+        // Translate the same game to the front of either physical panel.
+        int localX = x - (rearOnLeft ? 64-VisibleWidth : 0);
+        if (localX < 0 || localX >= VisibleWidth) return black;
+        if (screen == MoviePlayback && selectedMovie != 0) return Movies::Pixel(localX, y);
+        return pixels[y*64+localX];
+    }
     void Update() {
         uint32_t now = millis();
         float dt = last ? (now-last)/1000.0f : 0;
@@ -92,20 +208,57 @@ public:
         if (dt > 0.1f) dt = 0.1f;
         bool up = ButtonHandler::GetUpPressed();
         bool space = ButtonHandler::GetSpacePressed();
+        int mouseX, mouseY;
+        uint8_t mouseButtons;
+        bool mouseConnected = ButtonHandler::ReadMouse(mouseX, mouseY, mouseButtons);
+        bool mouseClick = (mouseButtons & 1) && !(previousMouseButtons & 1);
+        previousMouseButtons = mouseButtons;
         if (up) {
             if (screen == Faces) randomSeed(micros());
-            screen = screen == Faces ? Selection : screen == Slots ? Selection : Faces;
+            screen = screen == Faces ? Selection : screen == MoviePlayback ? MovieSelection
+                : (screen == Slots || screen == Pong || screen == MovieSelection) ? Selection : Faces;
             ButtonHandler::SetGamesInputActive(Active());
         }
         if (!Active()) return;
-        ButtonHandler::GetRightPressed(); ButtonHandler::GetOKPressed();
-        if (space && !up) {
-            if (screen == Selection) screen = Slots;
-            else Spin();
+        bool right = ButtonHandler::GetRightPressed();
+        bool left = ButtonHandler::GetLeftPressed();
+        int direction = int(right) - int(left);
+        bool enter = ButtonHandler::GetOKPressed();
+        if (screen == Selection && direction && !up) selectedGame = (selectedGame + 3 + direction) % 3;
+        if (direction && !up && (screen == MovieSelection || screen == MoviePlayback)) {
+            selectedMovie = (selectedMovie + Movies::Count + direction) % Movies::Count;
+            Movies::Start(selectedMovie);
+        }
+        if (screen == MovieSelection && (enter || space) && !up) {
+            screen = MoviePlayback;
+            Movies::Start(selectedMovie);
+        }
+        if (screen == MoviePlayback) { Movies::Update(); return; }
+        if ((space || (enter && screen == Selection)) && !up) {
+            if (screen == Selection) {
+                screen = selectedGame == 0 ? Slots : selectedGame == 1 ? Pong : MovieSelection;
+                if (screen == Pong) ResetPong();
+            } else if (screen == Slots && space) Spin();
+
         }
         Rect(0,0,64,32,black);
         if (screen == Selection) {
-            Text("GAMES",17,1,1,gold); Text("SLOTS",17,12,1,white); Text("SPACE",17,24,1,green);
+            Text("MENU",20,0,1,gold);
+            Text("SLOTS",11,8,1,selectedGame == 0 ? white : RGBColor(55,60,65));
+            Text("PONG",11,16,1,selectedGame == 1 ? white : RGBColor(55,60,65));
+            Text("MOVIES",11,24,1,selectedGame == 2 ? white : RGBColor(55,60,65));
+            Rect(3,10 + selectedGame*8,4,3,green);
+            return;
+        }
+        if (screen == MovieSelection) {
+            Text("MOVIES",14,0,1,gold);
+            const char* name = Movies::Name(selectedMovie);
+            Text(name,(64-int(strlen(name))*6)/2,12,1,white);
+            Text("PLAY",20,24,1,green);
+            return;
+        }
+        if (screen == Pong) {
+            UpdatePong(dt, mouseY, mouseConnected, !up && (space || mouseClick));
             return;
         }
         banner = fmaxf(0, banner-dt);

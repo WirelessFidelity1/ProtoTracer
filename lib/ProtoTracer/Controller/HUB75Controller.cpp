@@ -34,22 +34,26 @@ void HUB75Controller::Display(){
     IPixelGroup* camPixels = cameras->GetCameras()[0]->GetPixelGroup();
     IPixelGroup* camSidePixelsL = cameras->GetCameras()[1]->GetPixelGroup();
     IPixelGroup* camSidePixelsR = cameras->GetCameras()[2]->GetPixelGroup();
-    bool showDVD = Menu::GetFaceState() == 9 && !Games::Instance().Active()
-        && Menu::GetCurrentMenu() == Menu::Faces && Menu::GetPosition().Y >= 96.0f;
+    bool showDVD = Games::Instance().DVDActive();
 
     for (uint16_t y = 0; y < 32; y++) {
         for (uint16_t x = 0; x < 64; x++){
             uint16_t pixelNum = y * 64 + x;
 
             rgb24 rgbColor = rgb24((uint16_t)camPixels->GetColor(pixelNum)->R, (uint16_t)camPixels->GetColor(pixelNum)->G, (uint16_t)camPixels->GetColor(pixelNum)->B);
-            if (Games::Instance().Active()) {
-                RGBColor gameColor = Games::Instance().Pixel(x, 31 - y);
+            if (Games::Instance().Active() && !showDVD) {
+                RGBColor gameColor = Games::Instance().Pixel(x, 31 - y, true);
                 rgbColor = rgb24(gameColor.R, gameColor.G, gameColor.B);
             }
 
             // Faces mirror across the visor; game text must read normally on both panels.
             uint16_t secondPanelX = Games::Instance().Active() || showDVD ? x : 63 - x;
             rgb24 firstColor = rgbColor;
+            if (Games::Instance().Active() && !showDVD) {
+                // The two physical panels have their covered rear edges on opposite ends.
+                RGBColor firstGameColor = Games::Instance().Pixel(x, 31 - y, false);
+                firstColor = rgb24(firstGameColor.R, firstGameColor.G, firstGameColor.B);
+            }
             if (useSecondPanelPixels && !Games::Instance().Active() && !showDVD) {
                 // The reflected text pass belongs on the first physical panel.
                 // Both passes contain identical face geometry.

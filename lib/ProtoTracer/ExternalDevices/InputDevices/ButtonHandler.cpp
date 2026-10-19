@@ -4,12 +4,14 @@
 USBHost myusb;
 USBHub hub1(myusb);
 KeyboardController keyboard1(myusb);
+MouseController mouse1(myusb);
 
 USBHIDParser hid1(myusb);
 USBHIDParser hid2(myusb);
 USBHIDParser hid3(myusb);
 
 volatile bool ButtonHandler::rightPressed = false;
+volatile bool ButtonHandler::leftPressed = false;
 volatile bool ButtonHandler::okPressed = false;
 volatile bool ButtonHandler::upPressed = false;
 volatile bool ButtonHandler::spacePressed = false;
@@ -38,6 +40,8 @@ void ButtonHandler::OnRawPress(uint8_t keycode) {
     Serial.print(keycode);
     Serial.print(" HEX: ");
     Serial.println(keycode, HEX);
+
+    if (keycode == 0x50) leftPressed = true;
 
     if (keycode == 0x4F) {
         Serial.println("RIGHT");
@@ -77,9 +81,30 @@ void ButtonHandler::UpdateUSB() {
 }
 
 
+bool ButtonHandler::ReadMouse(int& x, int& y, uint8_t& buttons) {
+    static uint8_t heldButtons = 0;
+    x = 0; y = 0;
+    bool connected = static_cast<USBHIDInput&>(mouse1).operator bool();
+    if (mouse1.available()) {
+        x = mouse1.getMouseX();
+        y = mouse1.getMouseY();
+        heldButtons = mouse1.getButtons();
+        mouse1.mouseDataClear();
+    }
+    if (!connected) heldButtons = 0;
+    buttons = heldButtons;
+    return connected;
+}
+
 // --------------------------------------------------
 // Get and clear Right Arrow press
 // --------------------------------------------------
+
+bool ButtonHandler::GetLeftPressed() {
+    bool pressed = leftPressed;
+    leftPressed = false;
+    return pressed;
+}
 
 bool ButtonHandler::GetRightPressed() {
 
@@ -122,6 +147,7 @@ bool ButtonHandler::GamesInputActive() { return gamesInputActive || upPressed; }
 
 void ButtonHandler::SetGamesInputActive(bool active) {
     rightPressed = false;
+    leftPressed = false;
     okPressed = false;
     gamesInputActive = active;
 }
