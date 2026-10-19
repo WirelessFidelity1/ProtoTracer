@@ -351,6 +351,7 @@ void HeadsUpDisplay::ResetI2CBus() {
 }
 
 void HeadsUpDisplay::Update() {
+    if (externalPreview && !previewReady) return;
     if (timeStep.IsReady() && didBegin){
         if (splashFinished){// Draw the bitmap to the display at the specified top-left coordinate
             UpdateFaceInformation();
@@ -377,6 +378,7 @@ void HeadsUpDisplay::Update() {
         }
 
         ResetDisplayBuffer();
+        previewReady = false;
     }
 }
 
@@ -387,6 +389,7 @@ void HeadsUpDisplay::SetEffect(Effect* effect) {
 void HeadsUpDisplay::ApplyEffect(IPixelGroup* pixelGroup) {
     //Actually apply effect
     subEffect->ApplyEffect(pixelGroup);
+    if (externalPreview) return;
     
     unsigned int pixelCount = pixelGroup->GetPixelCount();
     
@@ -395,12 +398,22 @@ void HeadsUpDisplay::ApplyEffect(IPixelGroup* pixelGroup) {
             Vector2D pixelLocation = pixelGroup->GetCoordinate(i);
             RGBColor color = *pixelGroup->GetColor(i);
 
-            if(color.R > 0 || color.G > 0 || color.G > 0){
+            if(color.R > 0 || color.G > 0 || color.B > 0){
                 EnableBitFaceRender(pixelLocation.X, pixelLocation.Y);
             }
         }
     }
     
+}
+
+void HeadsUpDisplay::SetPreviewFrame(const RGBColor* pixels) {
+    ResetDisplayBuffer();
+    for (uint16_t i = 0; i < 64 * 32; ++i) {
+        const RGBColor& color = pixels[i];
+        if (color.R || color.G || color.B)
+            faceBitmap[i / 8] |= 1 << (7 - (i % 8));
+    }
+    previewReady = true;
 }
 
 void HeadsUpDisplay::ResetDisplayBuffer() {
@@ -452,7 +465,16 @@ void HeadsUpDisplay::UpdateFaceInformation() {
     CheckInvertPrintText(3, 60, 12, percentArray[Menu::GetFanExt()]);
     CheckInvertPrintText(34, 60, 11, percentArray[Menu::GetFanSpeed()]);
 
-    display.drawBitmap(66, 35, faceBitmap, 64, 32, 0);
+    // Template interior: X 65..125, Y 34..61. Fit the 2:1 preview
+    // inside that area without covering its border or clipping the last rows.
+    for (uint8_t y = 0; y < 28; ++y) {
+        uint8_t sourceY = (uint16_t(y) * 32 + 16) / 28;
+        for (uint8_t x = 0; x < 56; ++x) {
+            uint8_t sourceX = (uint16_t(x) * 64 + 32) / 56;
+            if (faceBitmap[sourceY * 8 + sourceX / 8] & (0x80 >> (sourceX % 8)))
+                display.drawPixel(67 + x, 34 + y, 0);
+        }
+    }
 }
 
 

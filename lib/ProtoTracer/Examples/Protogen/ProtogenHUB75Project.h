@@ -164,11 +164,24 @@ public:
         return Games::Instance().DVDActive();
     }
 
+    void UpdatePreview() {
+        RGBColor frame[64 * 32];
+        IPixelGroup* pixels = cameras.GetMainPixelGroup();
+        bool activity = Games::Instance().Active() && !IsDVDVisible();
+        for (uint16_t y = 0; y < 32; ++y) for (uint16_t x = 0; x < 64; ++x) {
+            frame[y * 64 + x] = activity ? Games::Instance().Pixel(x, y)
+                : *pixels->GetColor((31 - y) * 64 + x);
+        }
+        hud.SetPreviewFrame(frame);
+        hud.Update();
+    }
+
     void Render() {
         uint32_t start = micros();
         controller.ClearSecondPanel();
         if (IsDVDVisible()) {
             RenderDVD();
+            UpdatePreview();
             renderTime = (micros() - start) / 1000000.0f;
             return;
         }
@@ -183,10 +196,12 @@ public:
             Menu::SetRenderMirrorX(false);
         }
         Project::Render();
+        UpdatePreview();
         renderTime = (micros() - start) / 1000000.0f;
     }
 
     ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 3, Vector2D(), Vector2D(192.0f, 94.0f), 22, 34, 9){
+        hud.UseExternalPreview();
         scene.AddObject(pM.GetObject());
         scene.AddObject(deltaDisplayBackground.GetObject());
         scene.AddObject(dvd.GetObject());

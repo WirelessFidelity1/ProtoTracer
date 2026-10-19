@@ -78,6 +78,8 @@ private:
     static const uint8_t FaceTemplate[];
 
     const IPixelGroup* facePixels;
+    bool externalPreview = false;
+    bool previewReady = false;
 
     /**
      * @brief Resets the display buffer to a blank state.
@@ -98,6 +100,9 @@ private:
     void UpdateFaceInformation();
 
 public:
+    // Supply a complete 64x32 frame in display order instead of effect samples.
+    void UseExternalPreview() { externalPreview = true; }
+    void SetPreviewFrame(const RGBColor* pixels);
     /**
      * @brief Constructs a HeadsUpDisplay with face rendering boundaries.
      *
