@@ -3,9 +3,9 @@ HUB75 movies
 
 Press Up to open the activity menu. Left/Right cycle Slots, Pong, and Movies;
 Enter or Space opens the selection. In Movies, Left/Right cycle the five
-available displays, and Enter or Space starts
-playback. Left/Right also switch movies during playback. Up returns to the movie
-picker, then the activity menu, then faces.
+available clips, and Enter or Space starts playback. Left/Right also switch
+movies during playback. Up returns to the movie picker, then the activity menu,
+then faces. Slots spins with Space; Pong retains its USB mouse paddle controls.
 
 `python tools/build_movies.py` regenerates `MoviesData.h` after texture changes.
 The picker contains DVD, PS2, Rick, Gamecube, and VaporWave. Left/Right also cycle values in

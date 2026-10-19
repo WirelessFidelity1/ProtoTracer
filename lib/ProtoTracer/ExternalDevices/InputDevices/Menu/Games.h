@@ -223,7 +223,8 @@ public:
     RGBColor PreviewPixel(int x, int y) const {
         RGBColor color = Pixel(x, y);
         // Keep the white joke text legible on the monochrome preview.
-        return bsod && color.R < 128 ? black : color;
+        if (bsod && color.R < 128) return black;
+        return color;
     }
     bool DVDActive() const { return !bsod && screen == MoviePlayback && selectedMovie == 0; }
     RGBColor Pixel(int x, int y, bool rearOnLeft = false) const {

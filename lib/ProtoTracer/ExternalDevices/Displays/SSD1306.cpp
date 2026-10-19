@@ -465,16 +465,10 @@ void HeadsUpDisplay::UpdateFaceInformation() {
     CheckInvertPrintText(3, 60, 12, percentArray[Menu::GetFanExt()]);
     CheckInvertPrintText(34, 60, 11, percentArray[Menu::GetFanSpeed()]);
 
-    // Template interior: X 65..125, Y 34..61. Fit the 2:1 preview
-    // inside that area without covering its border or clipping the last rows.
-    for (uint8_t y = 0; y < 28; ++y) {
-        uint8_t sourceY = (uint16_t(y) * 32 + 16) / 28;
-        for (uint8_t x = 0; x < 56; ++x) {
-            uint8_t sourceX = (uint16_t(x) * 64 + 32) / 56;
-            if (faceBitmap[sourceY * 8 + sourceX / 8] & (0x80 >> (sourceX % 8)))
-                display.drawPixel(67 + x, 34 + y, 0);
-        }
-    }
+    // Reserve the full bottom-right 64x32 area for an unscaled preview.
+    // Clear the old template border before drawing; every source pixel remains visible.
+    display.fillRect(64, 32, 64, 32, 1);
+    display.drawBitmap(64, 32, faceBitmap, 64, 32, 0);
 }
 
 
