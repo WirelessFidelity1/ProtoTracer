@@ -93,6 +93,83 @@ void ProtogenProject::SetMaterialColor(){
     }
 }
 
+void ProtogenProject::UpdateAntenna() {
+    static float current[ANTENNA_LED_COUNT][3] = {};
+    static float from[ANTENNA_LED_COUNT][3] = {};
+    static uint32_t lastFrame = 0, fadeStarted = 0;
+    static bool fadeRunning = false;
+    uint32_t now = millis();
+    // ANT ranges from off (0) to full brightness (9).
+    uint8_t brightness = uint16_t(min(uint8_t(9), Menu::GetAccentBrightness())) * 255 / 9;
+    uint8_t selection = Menu::GetAccentColor();
+    bool changed = brightness != lastAntennaBrightness || selection != lastAntennaColor;
+#if defined(PROJECT_PROTOGEN_HUB75)
+    // Solid colors idle after their transition; only the final mode animates.
+    if (!changed && !fadeRunning && selection != 9) return;
+#endif
+    if (changed) {
+        for (uint8_t i=0; i<ANTENNA_LED_COUNT; ++i)
+            for (uint8_t channel=0; channel<3; ++channel) from[i][channel] = current[i][channel];
+        fadeStarted = now;
+        fadeRunning = true;
+        lastAntennaBrightness = brightness;
+        lastAntennaColor = selection;
+    }
+#if defined(PROJECT_PROTOGEN_HUB75)
+    // Limit the continuous effect to 10 Hz to reduce panel-refresh interference.
+    uint16_t interval = selection == 9 && !fadeRunning ? 100 : 33;
+    if (!changed && now-lastFrame < interval) return;
+#else
+    if (!changed && now-lastFrame < 20) return;
+#endif
+    lastFrame = now;
+    float fade = fminf((now-fadeStarted)/550.0f,1.0f);
+    fade = fade*fade*(3-2*fade);
+    bool pixelsChanged = false;
+    for (uint8_t i=0; i<ANTENNA_LED_COUNT; ++i) {
+        RGBColor target(0,0,0);
+        switch (selection) {
+            case 0: target = RGBColor(0,220,255); break;
+            case 1: target = RGBColor(255,255,0); break;
+            case 2: target = RGBColor(255,100,0); break;
+            case 3: target = RGBColor(255,255,255); break;
+            case 4: target = RGBColor(0,255,0); break;
+            case 5: target = RGBColor(64,0,64); break;
+            case 6: target = RGBColor(255,0,0); break;
+            case 7: target = RGBColor(0,0,255); break;
+            case 8: target = RGBColor(255,30,140); break;
+            case 9: {
+                // Crossfade a cyan light between the four non-tip LEDs, looping.
+                const float count = ANTENNA_LED_COUNT-1;
+                float phase = fmodf((now-fadeStarted)/900.0f,count);
+                float distance = fabsf(float(i)-phase);
+                distance = fminf(distance,count-distance);
+                float level = fmaxf(0.0f,1.0f-distance);
+                level = level*level*(3-2*level);
+                target = RGBColor(0,uint8_t(220*level),uint8_t(255*level));
+                break;
+            }
+            default: target = RGBColor(0,220,255); break;
+        }
+        // The red tip follows ANT brightness, including off at ANT 0.
+        if (i == ANTENNA_LED_COUNT-1) target = RGBColor(255,0,0);
+        float channels[3] = {target.R*brightness/255.0f,
+            target.G*brightness/255.0f,target.B*brightness/255.0f};
+        for (uint8_t channel=0; channel<3; ++channel)
+            current[i][channel] = from[i][channel]+(channels[channel]-from[i][channel])*fade;
+        uint8_t r = uint8_t(current[i][0]+0.5f);
+        uint8_t g = uint8_t(current[i][1]+0.5f);
+        uint8_t b = uint8_t(current[i][2]+0.5f);
+        uint32_t color = (uint32_t(r)<<16) | (uint32_t(g)<<8) | b;
+        if (antenna1.getPixelColor(i) != color) {
+            antenna1.setPixelColor(i,r,g,b);
+            pixelsChanged = true;
+        }
+    }
+    if (pixelsChanged) antenna1.show();
+    if (now-fadeStarted >= 550) fadeRunning = false;
+}
+
 void ProtogenProject::UpdateFace(float ratio) {
     while(!frameLimiter.IsReady()) delay(1);
 
@@ -101,102 +178,7 @@ void ProtogenProject::UpdateFace(float ratio) {
     fanController.SetPWM(Menu::GetFanSpeed() * 25);
     fanControllerExt.SetPWM(Menu::GetFanExt() * 25);
 
-    uint8_t antennaBrightness = map(Menu::GetAccentBrightness(), 0, 10, 0, 255);
-    uint8_t antennaColor = Menu::GetAccentColor();
-
-    if (antennaBrightness != lastAntennaBrightness ||
-        antennaColor != lastAntennaColor)
-    {
-        // Calculate RGB
-        // Set both strips
-        // show()
-        //       uint8_t antennaBrightness = map(Menu::GetAccentBrightness(), 0, 10, 0, 255);
-        // uint8_t antennaColor = Menu::GetAccentColor();
-
-        uint8_t r = 0;
-        uint8_t g = 0;
-        uint8_t b = 0;
-
-        switch (antennaColor)
-        {
-        case 1: // YELLOW
-            r = 255;
-            g = 255;
-            b = 0;
-            break;
-
-        case 2: // ORANGE
-            r = 255;
-            g = 100;
-            b = 0;
-            break;
-
-        case 3: // WHITE
-            r = 255;
-            g = 255;
-            b = 255;
-            break;
-
-        case 4: // GREEN
-            r = 0;
-            g = 255;
-            b = 0;
-            break;
-
-        case 5: // PURPLE
-            r = 128;
-            g = 0;
-            b = 128;
-            break;
-
-        case 6: // RED
-            r = 255;
-            g = 0;
-            b = 0;
-            break;
-
-        case 7: // BLUE
-            r = 0;
-            g = 0;
-            b = 255;
-            break;
-
-        default:
-            // GRDIENT / RAINBOW / NOISE for now
-            r = 0;
-            g = 0;
-            b = 0;
-            break;
-        }
-
-        // Apply antenna brightness
-        r = (r * antennaBrightness) / 255;
-        g = (g * antennaBrightness) / 255;
-        b = (b * antennaBrightness) / 255;
-
-        // Top LED = red, also controlled by ANTNA brightness
-        uint8_t red = antennaBrightness;
-
-        for (uint8_t i = 0; i < ANTENNA_LED_COUNT; i++)
-        {
-            if (i == ANTENNA_LED_COUNT-1)
-            {
-                antenna1.setPixelColor(i, red, 0, 0);
-                // antenna2.setPixelColor(i, red, 0, 0);
-            }
-            else
-            {
-                antenna1.setPixelColor(i, r, g, b);
-                // antenna2.setPixelColor(i, r, g, b);
-            }
-        }
-
-        antenna1.show();
-        // antenna2.show();
-
-        lastAntennaBrightness = antennaBrightness;
-        lastAntennaColor = antennaColor;
-    }
+    UpdateAntenna();
 
     xOffset = fGenMatXMove.Update();
     yOffset = fGenMatYMove.Update();

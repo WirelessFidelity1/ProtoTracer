@@ -216,6 +216,7 @@ private:
     TimeStep frameLimiter = TimeStep(120);
 
 protected:
+    void UpdateAntenna();
     /**
      * @enum Color
      * @brief Enumeration of different color states for the face material.

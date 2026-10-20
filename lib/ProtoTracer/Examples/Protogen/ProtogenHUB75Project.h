@@ -232,6 +232,7 @@ public:
 
         if (IsDVDVisible()) {
             Menu::Update(ratio);
+            UpdateAntenna();
             UpdateDVD(true);
             pM.GetObject()->Disable();
             deltaDisplayBackground.GetObject()->Disable();

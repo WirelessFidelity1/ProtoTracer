@@ -453,12 +453,12 @@ void HeadsUpDisplay::UpdateFaceInformation() {
 
     // ROW 2
     CheckInvertPrintText(3, 28, 10, effectArray[Menu::GetEffectS()]);
-    CheckInvertPrintText(34, 28, 2, percentArray[Menu::GetAccentBrightness()]);
+    CheckInvertPrintText(34, 28, 2, antennaBrightnessArray[Menu::GetAccentBrightness()]);
     CheckInvertPrintText(66, 28, 8, colorArray[Menu::GetFaceColor()]);
     CheckInvertPrintText(98, 28, 5, onOffArray[Menu::UseBoopSensor()]);
 
     // ROW 3
-    CheckInvertPrintText(3, 45, 9, colorArray[Menu::GetAccentColor()]);
+    CheckInvertPrintText(3, 45, 9, antennaColorArray[Menu::GetAccentColor()]);
     CheckInvertPrintText(34, 45, 4, percentArray[Menu::GetMicLevel()]);
 
     // ROW 4
