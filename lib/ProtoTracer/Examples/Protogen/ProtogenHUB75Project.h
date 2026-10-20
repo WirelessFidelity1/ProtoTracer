@@ -248,6 +248,7 @@ public:
 #endif
 
         UpdateFace(ratio);
+        Games::Instance().UpdateBoop(Menu::UseBoopSensor() && IsBooped());
 
         bool showDVD = IsDVDVisible();
         UpdateDVD(showDVD);

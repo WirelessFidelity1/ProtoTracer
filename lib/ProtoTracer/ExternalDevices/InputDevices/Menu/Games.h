@@ -16,6 +16,7 @@ class Games {
     enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback, ScrollingText };
     TextScroller textScroller;
     bool bsod = false;
+    bool previousBoop = false;
     uint8_t selectedGame = 0;
     uint8_t selectedMovie = 0;
     float paddleY = 16, aiY = 16;
@@ -214,11 +215,16 @@ class Games {
         spinning = true; elapsed = 0; banner = 0;
         for (int i=0; i<3; ++i) {
             speed[i] = random(12000,16001)/1000.0f+i;
-            stop[i] = 0.85f+i*0.48f+random(50,161)/1000.0f;
+            stop[i] = 2.5f+i*0.75f+random(50,161)/1000.0f;
             stopped[i] = false;
         }
     }
 public:
+    void UpdateBoop(bool booped) {
+        bool pressed = booped && !previousBoop;
+        previousBoop = booped;
+        if (pressed && !bsod && screen == Slots) Spin();
+    }
     static Games& Instance() { static Games games; return games; }
     bool Active() const { return bsod || screen != Faces; }
     bool BSODActive() const { return bsod; }
@@ -350,6 +356,10 @@ public:
             for (int d=-1; d<=1; ++d) SymbolDraw(Symbol(i,nearest+d),11+i*21,int(16+d*18-(pos[i]-nearest)*18));
         }
         for (int y=0; y<32; y+=2) { Rect(21,y,1,1,RGBColor(35,35,40)); Rect(42,y,1,1,RGBColor(35,35,40)); }
-        if (banner > 0) { Rect(0,7,64,18,gold); Text(win ? "WIN" : "LOSE",win ? 14 : 8,9,2,black); }
+        // Blink every quarter-second, starting visible when the reels stop.
+        if (banner > 0 && uint8_t((2.0f-banner)*4.0f)%2 == 0) {
+            Rect(0,7,64,18,gold);
+            Text(win ? "WIN" : "LOSE",win ? 14 : 8,9,2,black);
+        }
     }
 };

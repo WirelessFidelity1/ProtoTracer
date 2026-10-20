@@ -27,3 +27,4 @@ and loops the message. Enter again pauses for editing; typing also resumes editi
 Up or Escape returns to the activity menu. B types a letter while in Text.
 The input editor appears only on the OLED; the outer panels are blank during editing.
 During playback both panels show the same readable message, and the OLED previews it.
+Slots also spins on a new boop when the BOOP setting is enabled. Holding the sensor does not repeat spins, and boops during a spin are ignored.
