@@ -222,6 +222,7 @@ public:
     static Games& Instance() { static Games games; return games; }
     bool Active() const { return bsod || screen != Faces; }
     bool BSODActive() const { return bsod; }
+    bool UpMenuActive() const { return screen != Faces; }
     RGBColor PreviewPixel(int x, int y) const {
         if (!bsod && screen == ScrollingText) return textScroller.Pixel(x,y,true);
         RGBColor color = Pixel(x, y);

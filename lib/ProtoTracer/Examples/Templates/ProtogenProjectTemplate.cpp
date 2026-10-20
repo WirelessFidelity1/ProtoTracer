@@ -17,12 +17,6 @@ void ProtogenProject::LinkParameters(){
     eEA.AddParameter(&offsetFaceOSC, offsetFaceIndOSC, 40, 0.0f, 1.0f);
 }
 
-void ProtogenProject::HideFaceForActivity(bool updateAnimator) {
-    eEA.AddParameterFrame(offsetFaceInd, 1.0f);
-    // DVD skips UpdateFace, so its hidden face spring needs advancing here.
-    if (updateAnimator) eEA.Update();
-}
-
 void ProtogenProject::SetBaseMaterial(Material* material){
     materialAnimator.SetBaseMaterial(Material::Add, material);
 }

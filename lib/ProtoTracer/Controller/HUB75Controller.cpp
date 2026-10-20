@@ -35,6 +35,15 @@ void HUB75Controller::Display(){
     IPixelGroup* camSidePixelsL = cameras->GetCameras()[1]->GetPixelGroup();
     IPixelGroup* camSidePixelsR = cameras->GetCameras()[2]->GetPixelGroup();
     bool showDVD = Games::Instance().DVDActive();
+    bool upMenu = Games::Instance().UpMenuActive();
+    uint32_t now = millis();
+    if (upMenu != previousUpMenu && !Games::Instance().BSODActive()) {
+        for (uint16_t i = 0; i < 2 * 64 * 32; ++i) slideFrom[i] = displayFrame[i];
+        slideStarted = now;
+        slideRunning = true;
+    }
+    previousUpMenu = upMenu;
+    if (Games::Instance().BSODActive()) slideRunning = false;
 
     for (uint16_t y = 0; y < 32; y++) {
         for (uint16_t x = 0; x < 64; x++){
@@ -60,11 +69,32 @@ void HUB75Controller::Display(){
                 const RGBColor& color = secondPanelPixels[pixelNum];
                 firstColor = rgb24(color.R, color.G, color.B);
             }
-            backgroundLayer.drawPixel(x, (31 - y), firstColor);
-            backgroundLayer.drawPixel(secondPanelX, (31 - y) + 32, rgbColor);
+            displayFrame[(31-y)*64+x] = RGBColor(firstColor.red, firstColor.green, firstColor.blue);
+            displayFrame[2048+(31-y)*64+secondPanelX] = RGBColor(rgbColor.red, rgbColor.green, rgbColor.blue);
         }
     }
 
+    float progress = fminf((now-slideStarted)/250.0f,1.0f);
+    if (progress >= 1.0f) slideRunning = false;
+    int travel = int(32 * progress * progress * (3-2*progress) + 0.5f);
+    // Read incoming rows before overwriting them, so this buffer also retains
+    // the presented frame for a seamless reversal if Up is pressed mid-slide.
+    for (int row = 0; row < 32; ++row) {
+        int y = upMenu ? row : 31-row;
+        int incomingY = upMenu ? y+32-travel : y-32+travel;
+        int outgoingY = upMenu ? y-travel : y+travel;
+        for (uint8_t panel = 0; panel < 2; ++panel) for (int x = 0; x < 64; ++x) {
+            int index = panel*2048+y*64+x;
+            RGBColor color = displayFrame[index];
+            if (slideRunning) {
+                color = incomingY >= 0 && incomingY < 32
+                    ? displayFrame[panel*2048+incomingY*64+x]
+                    : slideFrom[panel*2048+outgoingY*64+x];
+            }
+            displayFrame[index] = color;
+            backgroundLayer.drawPixel(x,y+panel*32,rgb24(color.R,color.G,color.B));
+        }
+    }
     backgroundLayer.swapBuffers(false);
 
     for (uint16_t x = 0; x < kApaMatrixWidth / 2; x++){

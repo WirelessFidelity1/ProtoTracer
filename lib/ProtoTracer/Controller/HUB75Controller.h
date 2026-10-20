@@ -28,6 +28,11 @@ class HUB75Controller : public Controller {
 private:
     RGBColor secondPanelPixels[64 * 32];
     bool useSecondPanelPixels = false;
+    RGBColor displayFrame[2 * 64 * 32];
+    RGBColor slideFrom[2 * 64 * 32];
+    bool previousUpMenu = false;
+    bool slideRunning = false;
+    uint32_t slideStarted = 0;
 public:
     void CaptureSecondPanel(const RGBColor* pixels);
     void ClearSecondPanel() { useSecondPanelPixels = false; }

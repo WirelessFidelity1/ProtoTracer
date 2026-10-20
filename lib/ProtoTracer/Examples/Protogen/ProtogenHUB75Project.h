@@ -232,7 +232,6 @@ public:
 
         if (IsDVDVisible()) {
             Menu::Update(ratio);
-            HideFaceForActivity(true);
             UpdateDVD(true);
             pM.GetObject()->Disable();
             deltaDisplayBackground.GetObject()->Disable();
@@ -247,7 +246,6 @@ public:
         SelectFace(mode);
 #endif
 
-        if (Games::Instance().Active()) HideFaceForActivity();
         UpdateFace(ratio);
 
         bool showDVD = IsDVDVisible();
