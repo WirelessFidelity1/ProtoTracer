@@ -222,9 +222,18 @@ void Menu::Update(float ratio) {
         menuTarget = MenuHandler<menuCount>::GetCurrentMenu() != 0 ? 0.0f : 100.0f;
     }
 
-    float xPosition = dampedSpringX.Calculate(target, 0.25f);
-
-    showMenuRatio = dampedSpringShow.Calculate(menuTarget, 0.25f);
+    // Settle in roughly 300 ms, independent of rendering FPS. The previous
+    // fixed-step springs could keep the settings moving for several seconds.
+    static float xPosition = 0.0f;
+    static uint32_t previousTime = millis();
+    uint32_t now = millis();
+    float dt = fminf((now - previousTime) / 1000.0f, 0.1f);
+    previousTime = now;
+    float blend = 1.0f - expf(-dt / 0.05f);
+    xPosition += (target - xPosition) * blend;
+    showMenuRatio += (menuTarget - showMenuRatio) * blend;
+    if (fabsf(target - xPosition) < 0.05f) xPosition = target;
+    if (fabsf(menuTarget - showMenuRatio) < 0.05f) showMenuRatio = menuTarget;
     material.Update(ratio);
 
     float ratioX = sinf(ratio * Mathematics::MPI * 2.0f * wiggleSpeedX) * 4.0f;
