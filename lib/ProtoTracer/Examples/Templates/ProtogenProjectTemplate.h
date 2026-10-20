@@ -216,6 +216,8 @@ private:
     TimeStep frameLimiter = TimeStep(120);
 
 protected:
+    // Hold the audio-face offset spring while an activity covers the face.
+    void HideFaceForActivity(bool updateAnimator = false);
     /**
      * @enum Color
      * @brief Enumeration of different color states for the face material.
