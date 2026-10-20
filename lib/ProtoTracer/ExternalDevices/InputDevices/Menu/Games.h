@@ -5,6 +5,7 @@
 #include <string.h>
 #include "../ButtonHandler.h"
 #include "Movies.h"
+#include "TextScroller.h"
 #include "../../../Utils/RGBColor.h"
 
 // Games use a logical 64x32 canvas fitted into the uncovered panel area.
@@ -12,7 +13,8 @@
 class Games {
     static constexpr int VisibleWidth = 51; // 13 of 64 columns (~20%) stay black.
 
-    enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback };
+    enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback, ScrollingText };
+    TextScroller textScroller;
     bool bsod = false;
     uint8_t selectedGame = 0;
     uint8_t selectedMovie = 0;
@@ -221,6 +223,7 @@ public:
     bool Active() const { return bsod || screen != Faces; }
     bool BSODActive() const { return bsod; }
     RGBColor PreviewPixel(int x, int y) const {
+        if (!bsod && screen == ScrollingText) return textScroller.Pixel(x,y,true);
         RGBColor color = Pixel(x, y);
         // Keep the white joke text legible on the monochrome preview.
         if (bsod && color.R < 128) return black;
@@ -230,6 +233,8 @@ public:
     RGBColor Pixel(int x, int y, bool rearOnLeft = false) const {
         // The blue screen fills both physical panels, including the game margin.
         if (bsod) return x >= 0 && x < 64 && y >= 0 && y < 32 ? pixels[y*64+x] : black;
+        // Text fills each panel independently, with readable glyphs on both.
+        if (!bsod && screen == ScrollingText) return textScroller.Pixel(x,y);
         // Translate the same game to the front of either physical panel.
         int localX = x - (rearOnLeft ? 64-VisibleWidth : 0);
         if (localX < 0 || localX >= VisibleWidth) return black;
@@ -273,9 +278,10 @@ public:
             return;
         }
         if (up) {
+            if (screen == ScrollingText) ButtonHandler::SetTextInputActive(false);
             if (screen == Faces) randomSeed(micros());
             screen = screen == Faces ? Selection : screen == MoviePlayback ? MovieSelection
-                : (screen == Slots || screen == Pong || screen == MovieSelection) ? Selection : Faces;
+                : (screen == Slots || screen == Pong || screen == MovieSelection || screen == ScrollingText) ? Selection : Faces;
             ButtonHandler::SetGamesInputActive(Active());
         }
         if (!Active()) return;
@@ -283,7 +289,7 @@ public:
         bool left = ButtonHandler::GetLeftPressed();
         int direction = int(right) - int(left);
         bool enter = ButtonHandler::GetOKPressed();
-        if (screen == Selection && direction && !up) selectedGame = (selectedGame + 3 + direction) % 3;
+        if (screen == Selection && direction && !up) selectedGame = (selectedGame + 4 + direction) % 4;
         if (direction && !up && (screen == MovieSelection || screen == MoviePlayback)) {
             selectedMovie = (selectedMovie + Movies::Count + direction) % Movies::Count;
             Movies::Start(selectedMovie);
@@ -295,18 +301,20 @@ public:
         if (screen == MoviePlayback) { Movies::Update(); return; }
         if ((space || (enter && screen == Selection)) && !up) {
             if (screen == Selection) {
-                screen = selectedGame == 0 ? Slots : selectedGame == 1 ? Pong : MovieSelection;
+                screen = selectedGame == 0 ? Slots : selectedGame == 1 ? Pong : selectedGame == 2 ? MovieSelection : ScrollingText;
                 if (screen == Pong) ResetPong();
+                if (screen == ScrollingText) textScroller.Begin();
             } else if (screen == Slots && space) Spin();
 
         }
+        if (screen == ScrollingText) { textScroller.Update(); return; }
         Rect(0,0,64,32,black);
         if (screen == Selection) {
-            Text("MENU",20,0,1,gold);
-            Text("SLOTS",11,8,1,selectedGame == 0 ? white : RGBColor(55,60,65));
-            Text("PONG",11,16,1,selectedGame == 1 ? white : RGBColor(55,60,65));
-            Text("MOVIES",11,24,1,selectedGame == 2 ? white : RGBColor(55,60,65));
-            Rect(3,10 + selectedGame*8,4,3,green);
+            Text("SLOTS",11,0,1,selectedGame == 0 ? white : RGBColor(55,60,65));
+            Text("PONG",11,8,1,selectedGame == 1 ? white : RGBColor(55,60,65));
+            Text("MOVIES",11,16,1,selectedGame == 2 ? white : RGBColor(55,60,65));
+            Text("TEXT",11,24,1,selectedGame == 3 ? white : RGBColor(55,60,65));
+            Rect(3,2 + selectedGame*8,4,3,green);
             return;
         }
         if (screen == MovieSelection) {

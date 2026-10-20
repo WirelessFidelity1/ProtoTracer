@@ -37,6 +37,11 @@ private:
     static volatile bool spacePressed;
     static volatile bool gamesInputActive;
 
+    static volatile bool textInputActive;
+    static volatile uint8_t textHead, textTail;
+    static volatile char textKeys[64];
+    static void OnTextPress(int key);
+
     // USB keyboard callbacks
     static void OnRawPress(uint8_t keycode);
     static void OnRawRelease(uint8_t keycode);
@@ -85,6 +90,8 @@ public:
     static bool GetRightPressed();
     static bool GetLeftPressed();
     static bool GetBPressed();
+    static void SetTextInputActive(bool active);
+    static int ReadTextKey();
 
     /**
      * @brief Returns true when an Enter/OK press occurred.

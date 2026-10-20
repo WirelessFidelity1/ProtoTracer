@@ -14,6 +14,9 @@ volatile bool ButtonHandler::rightPressed = false;
 volatile bool ButtonHandler::leftPressed = false;
 volatile bool ButtonHandler::bPressed = false;
 bool ButtonHandler::bHeld = false;
+volatile bool ButtonHandler::textInputActive = false;
+volatile uint8_t ButtonHandler::textHead = 0, ButtonHandler::textTail = 0;
+volatile char ButtonHandler::textKeys[64] = {};
 volatile bool ButtonHandler::okPressed = false;
 volatile bool ButtonHandler::upPressed = false;
 volatile bool ButtonHandler::spacePressed = false;
@@ -33,6 +36,10 @@ bool ButtonHandler::holdingState;
 // --------------------------------------------------
 
 void ButtonHandler::OnRawPress(uint8_t keycode) {
+    if (textInputActive) {
+        if (keycode == 0x52 || keycode == 0x29) upPressed = true;
+        return;
+    }
     #if defined(PROJECT_PROTOGEN_HUB75)
     if (keycode == 0x05 && !bHeld) { bHeld = true; bPressed = true; }
     if (keycode == 0x52) upPressed = true;
@@ -70,6 +77,7 @@ void ButtonHandler::BeginUSB() {
 
     myusb.begin();
 
+    keyboard1.attachPress(OnTextPress);
     keyboard1.attachRawPress(OnRawPress);
     keyboard1.attachRawRelease(OnRawRelease);
 }
@@ -144,6 +152,30 @@ bool ButtonHandler::GetSpacePressed() {
     bool pressed = spacePressed;
     spacePressed = false;
     return pressed;
+}
+
+void ButtonHandler::SetTextInputActive(bool active) {
+    textInputActive = false;
+    textHead = textTail = 0;
+    rightPressed = leftPressed = okPressed = spacePressed = bPressed = false;
+    bHeld = false;
+    textInputActive = active;
+}
+
+void ButtonHandler::OnTextPress(int key) {
+    if (!textInputActive) return;
+    if (!(key >= 32 && key <= 126) && key != 8 && key != 127 && key != 13 && key != 10) return;
+    uint8_t next = (textHead + 1) % sizeof(textKeys);
+    if (next == textTail) return;
+    textKeys[textHead] = char(key);
+    textHead = next;
+}
+
+int ButtonHandler::ReadTextKey() {
+    if (textTail == textHead) return -1;
+    uint8_t key = textKeys[textTail];
+    textTail = (textTail + 1) % sizeof(textKeys);
+    return key;
 }
 
 bool ButtonHandler::GetBPressed() {

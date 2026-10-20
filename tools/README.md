@@ -1,7 +1,7 @@
 HUB75 movies
 ============
 
-Press Up to open the activity menu. Left/Right cycle Slots, Pong, and Movies;
+Press Up to open the activity menu. Left/Right cycle Slots, Pong, Movies, and Text;
 Enter or Space opens the selection. In Movies, Left/Right cycle the five
 available clips, and Enter or Space starts playback. Left/Right also switch
 movies during playback. Up returns to the movie picker, then the activity menu,
@@ -20,3 +20,10 @@ palette indices, and compression round trip.
 
 Press B on any screen to toggle a full-panel Windows 8-style joke blue screen with a sad face and boop error message.
 Press B again to return to the previous screen. Holding B does not retrigger it.
+
+Text accepts up to 128 printable ASCII characters, including spaces and punctuation.
+Backspace edits; Enter starts scrolling right to left independently across the full 64-pixel width of each panel
+and loops the message. Enter again pauses for editing; typing also resumes editing.
+Up or Escape returns to the activity menu. B types a letter while in Text.
+The input editor appears only on the OLED; the outer panels are blank during editing.
+During playback both panels show the same readable message, and the OLED previews it.
