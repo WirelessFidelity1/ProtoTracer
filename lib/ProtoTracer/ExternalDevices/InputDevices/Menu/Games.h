@@ -6,6 +6,7 @@
 #include "../ButtonHandler.h"
 #include "Movies.h"
 #include "TextScroller.h"
+#include "ArcadeGames.h"
 #include "../../../Utils/RGBColor.h"
 
 // Games use a logical 64x32 canvas fitted into the uncovered panel area.
@@ -13,8 +14,9 @@
 class Games {
     static constexpr int VisibleWidth = 51; // 13 of 64 columns (~20%) stay black.
 
-    enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback, ScrollingText };
+    enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback, ScrollingText, Tetris, Flappy };
     TextScroller textScroller;
+    ArcadeGames arcade;
     bool bsod = false;
     bool previousBoop = false;
     uint8_t selectedGame = 0;
@@ -248,13 +250,14 @@ public:
         if (!bsod && screen == MoviePlayback && selectedMovie != 0) return Movies::Pixel(localX, y);
         return pixels[y*64+localX];
     }
-    void Update() {
+    FLASHMEM __attribute__((noinline)) void Update() {
         uint32_t now = millis();
         float dt = last ? (now-last)/1000.0f : 0;
         last = now;
         if (dt > 0.1f) dt = 0.1f;
         bool up = ButtonHandler::GetUpPressed();
         bool space = ButtonHandler::GetSpacePressed();
+        bool down = ButtonHandler::GetDownPressed();
         int mouseX, mouseY;
         uint8_t mouseButtons;
         bool mouseConnected = ButtonHandler::ReadMouse(mouseX, mouseY, mouseButtons);
@@ -288,7 +291,7 @@ public:
             if (screen == ScrollingText) ButtonHandler::SetTextInputActive(false);
             if (screen == Faces) randomSeed(micros());
             screen = screen == Faces ? Selection : screen == MoviePlayback ? MovieSelection
-                : (screen == Slots || screen == Pong || screen == MovieSelection || screen == ScrollingText) ? Selection : Faces;
+                : (screen == Slots || screen == Pong || screen == MovieSelection || screen == ScrollingText || screen == Tetris || screen == Flappy) ? Selection : Faces;
             ButtonHandler::SetGamesInputActive(Active());
         }
         if (!Active()) return;
@@ -296,7 +299,7 @@ public:
         bool left = ButtonHandler::GetLeftPressed();
         int direction = int(right) - int(left);
         bool enter = ButtonHandler::GetOKPressed();
-        if (screen == Selection && direction && !up) selectedGame = (selectedGame + 4 + direction) % 4;
+        if (screen == Selection && direction && !up) selectedGame = (selectedGame + 6 + direction) % 6;
         if (direction && !up && (screen == MovieSelection || screen == MoviePlayback)) {
             selectedMovie = (selectedMovie + Movies::Count + direction) % Movies::Count;
             Movies::Start(selectedMovie);
@@ -308,20 +311,26 @@ public:
         if (screen == MoviePlayback) { Movies::Update(); return; }
         if ((space || (enter && screen == Selection)) && !up) {
             if (screen == Selection) {
-                screen = selectedGame == 0 ? Slots : selectedGame == 1 ? Pong : selectedGame == 2 ? MovieSelection : ScrollingText;
+                static const Screen activities[] = {Slots,Pong,MovieSelection,ScrollingText,Tetris,Flappy};
+                screen = activities[selectedGame];
                 if (screen == Pong) ResetPong();
                 if (screen == ScrollingText) textScroller.Begin();
+                if (screen == Tetris) arcade.ResetTetris();
+                if (screen == Flappy) arcade.ResetFlappy();
+                // The launch key must not rotate/drop/flap on the first game frame.
+                if (screen == Tetris || screen == Flappy) { enter=space=down=false; direction=0; }
             } else if (screen == Slots && space) Spin();
 
         }
         if (screen == ScrollingText) { textScroller.Update(); return; }
         Rect(0,0,64,32,black);
         if (screen == Selection) {
-            Text("SLOTS",11,0,1,selectedGame == 0 ? white : RGBColor(55,60,65));
-            Text("PONG",11,8,1,selectedGame == 1 ? white : RGBColor(55,60,65));
-            Text("MOVIES",11,16,1,selectedGame == 2 ? white : RGBColor(55,60,65));
-            Text("TEXT",11,24,1,selectedGame == 3 ? white : RGBColor(55,60,65));
-            Rect(3,2 + selectedGame*8,4,3,green);
+            static const char* names[] = {"SLOTS","PONG","MOVIES","TEXT","TETRIS","FLAPPY"};
+            uint8_t first=selectedGame/4*4;
+            for (uint8_t row=0;row<4 && first+row<6;++row)
+                Text(names[first+row],11,row*8,1,selectedGame==first+row ? white : RGBColor(55,60,65));
+            Rect(3,2+(selectedGame%4)*8,4,3,green);
+            Rect(60,first ? 24 : 0,2,6,gold);
             return;
         }
         if (screen == MovieSelection) {
@@ -329,6 +338,23 @@ public:
             const char* name = Movies::Name(selectedMovie);
             Text(name,(64-int(strlen(name))*6)/2,12,1,white);
             Text("PLAY",20,24,1,green);
+            return;
+        }
+        if (screen == Tetris || screen == Flappy) {
+            if (screen == Tetris) arcade.UpdateTetris(dt,up ? 0 : direction,!up && enter,!up && space,!up && down);
+            else arcade.UpdateFlappy(dt,!up && (space || enter || mouseClick));
+            if (screen == Tetris) {
+                // Already laid out in the 51-column visible area; do not rescale.
+                for (int y=0;y<32;++y) for (int x=0;x<VisibleWidth;++x)
+                    pixels[y*64+x]=arcade.Pixel(x,y);
+            } else {
+                for (int y=0;y<32;++y) for (int x=0;x<64;++x) Rect(x,y,1,1,arcade.Pixel(x,y));
+            }
+            if (arcade.GameOver() || (screen == Flappy && arcade.Ready())) {
+                Rect(0,9,64,16,black);
+                Text(arcade.GameOver() ? "LOSE" : "FLAPPY",arcade.GameOver() ? 20 : 14,9,1,white);
+                Text("SPACE",17,18,1,gold);
+            }
             return;
         }
         if (screen == Pong) {

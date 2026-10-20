@@ -20,6 +20,7 @@ volatile char ButtonHandler::textKeys[64] = {};
 volatile bool ButtonHandler::okPressed = false;
 volatile bool ButtonHandler::upPressed = false;
 volatile bool ButtonHandler::spacePressed = false;
+volatile bool ButtonHandler::downPressed = false;
 volatile bool ButtonHandler::gamesInputActive = false;
 
 long ButtonHandler::previousMillisISR;
@@ -43,6 +44,7 @@ void ButtonHandler::OnRawPress(uint8_t keycode) {
     #if defined(PROJECT_PROTOGEN_HUB75)
     if (keycode == 0x05 && !bHeld) { bHeld = true; bPressed = true; }
     if (keycode == 0x52) upPressed = true;
+    if (keycode == 0x51) downPressed = true;
     if (keycode == 0x2C) spacePressed = true;
     #endif
 
@@ -148,6 +150,12 @@ bool ButtonHandler::GetUpPressed() {
     return pressed;
 }
 
+bool ButtonHandler::GetDownPressed() {
+    bool pressed = downPressed;
+    downPressed = false;
+    return pressed;
+}
+
 bool ButtonHandler::GetSpacePressed() {
     bool pressed = spacePressed;
     spacePressed = false;
@@ -190,6 +198,7 @@ void ButtonHandler::SetGamesInputActive(bool active) {
     rightPressed = false;
     leftPressed = false;
     okPressed = false;
+    downPressed = false;
     gamesInputActive = active;
 }
 

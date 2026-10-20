@@ -35,6 +35,7 @@ private:
     static volatile bool okPressed;
     static volatile bool upPressed;
     static volatile bool spacePressed;
+    static volatile bool downPressed;
     static volatile bool gamesInputActive;
 
     static volatile bool textInputActive;
@@ -100,6 +101,7 @@ public:
     static bool GetOKPressed();
     static bool GetUpPressed();
     static bool GetSpacePressed();
+    static bool GetDownPressed();
     static bool GamesInputActive();
     static void SetGamesInputActive(bool active);
 };

@@ -1,7 +1,7 @@
 HUB75 movies
 ============
 
-Press Up to open the activity menu. Left/Right cycle Slots, Pong, Movies, and Text;
+Press Up to open the activity menu. Left/Right cycle Slots, Pong, Movies, Text, Tetris, and Flappy;
 Enter or Space opens the selection. In Movies, Left/Right cycle the five
 available clips, and Enter or Space starts playback. Left/Right also switch
 movies during playback. Up returns to the movie picker, then the activity menu,
@@ -28,3 +28,14 @@ Up or Escape returns to the activity menu. B types a letter while in Text.
 The input editor appears only on the OLED; the outer panels are blank during editing.
 During playback both panels show the same readable message, and the OLED previews it.
 Slots also spins on a new boop when the BOOP setting is enabled. Holding the sensor does not repeat spins, and boops during a spin are ignored.
+
+The activity menu pages automatically after four entries; continue Left/Right
+past Text to reach Tetris and Flappy. Up always returns from a game.
+
+Tetris: Left/Right move, Enter rotates with wall kicks, Down soft-drops one row,
+and Space hard-drops. Full rows clear and award points; gravity increases with
+score. Enter or Space restarts after game over.
+
+Flappy: Space, Enter, or a left mouse click starts/flaps. Avoid pipes and the
+floor/ceiling; each passed pipe scores a point. The same controls restart after
+losing. Both new games use the existing 51x32 visible game area and OLED preview.

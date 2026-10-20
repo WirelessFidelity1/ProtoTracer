@@ -2,6 +2,10 @@
 #include "../ExternalDevices/InputDevices/Menu/Games.h"
 #include "../ExternalDevices/InputDevices/Menu/Menu.h"
 
+// Keep transition images in RAM2, preserving RAM1 stack space for rendering.
+DMAMEM RGBColor HUB75Controller::displayFrame[2 * 64 * 32];
+DMAMEM RGBColor HUB75Controller::slideFrom[2 * 64 * 32];
+
 //Macro calls from SmartMatrix library included in SmartMatrixHUB75
 SMARTMATRIX_ALLOCATE_BUFFERS(matrix, kMatrixWidth, kMatrixHeight, kRefreshDepth, kDmaBufferRows, kPanelType, kMatrixOptions);
 SMARTMATRIX_ALLOCATE_BACKGROUND_LAYER(backgroundLayer, kMatrixWidth, kMatrixHeight, COLOR_DEPTH, kBackgroundLayerOptions);
@@ -12,6 +16,10 @@ SMARTMATRIX_ALLOCATE_BACKGROUND_LAYER(apaBackgroundLayer, kApaMatrixWidth, kApaM
 HUB75Controller::HUB75Controller(CameraManager* cameras, uint8_t maxBrightness, uint8_t maxAccentBrightness) : Controller(cameras, maxBrightness, maxAccentBrightness){}
 
 void HUB75Controller::Initialize(){
+    for (uint16_t i=0;i<2*64*32;++i) {
+        displayFrame[i]=RGBColor(0,0,0);
+        slideFrom[i]=RGBColor(0,0,0);
+    }
     //HUB75
     matrix.addLayer(&backgroundLayer);
     matrix.begin();
