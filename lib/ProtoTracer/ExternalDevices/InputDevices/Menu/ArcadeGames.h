@@ -16,6 +16,9 @@ class ArcadeGames {
     float pipeX[3] = {};
     uint8_t gapY[3] = {};
     bool passed[3] = {};
+    float dinoY = 0, dinoV = 0, distance = 0;
+    float cactusX[2] = {};
+    uint8_t cactusHeight[2] = {};
     RGBColor pixels[64*32];
 
     static bool Cell(uint8_t shape, uint8_t rotation, int x, int y) {
@@ -82,6 +85,74 @@ class ArcadeGames {
     }
 
 public:
+    void ResetDino() {
+        dinoY=dinoV=distance=0; score=0; dead=false; ready=true;
+        cactusX[0]=60; cactusX[1]=100;
+        cactusHeight[0]=6; cactusHeight[1]=8;
+    }
+    FLASHMEM __attribute__((noinline)) void UpdateDino(float dt,bool jump) {
+        if (dead && jump) ResetDino();
+        // Reach ~13 pixels and stay above the tallest cactus long enough
+        // for its full collision width to pass at the starting speed.
+        if (jump && dinoY<=0) { ready=false; dinoV=52; }
+        if (!dead && !ready) {
+            // Small steps prevent fast obstacles skipping the dinosaur.
+            for (float remaining=dt;remaining>0 && !dead;) {
+                float step=fminf(remaining,0.005f); remaining-=step;
+                float speed=fminf(34,18+distance/350);
+                distance+=speed*step;
+                score=min(9999,int(distance/5));
+                dinoV-=105*step; dinoY+=dinoV*step;
+                if (dinoY<0) { dinoY=0; dinoV=0; }
+                for (int i=0;i<2;++i) {
+                    cactusX[i]-=speed*step;
+                    if (cactusX[i]<-5) {
+                        // Leave enough time to land and jump again at every speed.
+                        int minimumGap=max(32,int(ceilf(speed*1.25f)));
+                        cactusX[i]=fmaxf(51,cactusX[1-i]+random(minimumGap,minimumGap+15));
+                        cactusHeight[i]=random(5,9);
+                    }
+                    // Inset body bounds allow the tail and snout to overhang.
+                    if (cactusX[i]<15 && cactusX[i]+4>9 && dinoY<cactusHeight[i]-1)
+                        dead=true;
+                }
+            }
+        }
+        for (auto& pixel:pixels) pixel=RGBColor(0,0,0);
+        const RGBColor white(225,225,225), gray(75,75,75);
+        Rect(0,28,51,1,white);
+        for (int i=0;i<7;++i) {
+            int x=((i*11-int(distance))%77+77)%77;
+            Rect(x,30+i%2,2+i%3,1,gray);
+        }
+        // Faint clouds drift behind the monochrome runner.
+        for (int i=0;i<2;++i) {
+            int x=((i*37+24-int(distance/4))%74+74)%74;
+            Rect(x,10+i*3,7,1,gray); Rect(x+2,9+i*3,3,1,gray);
+        }
+        for (int i=0;i<2;++i) {
+            int x=int(floorf(cactusX[i])), top=28-cactusHeight[i];
+            Rect(x+2,top,2,cactusHeight[i],white);
+            Rect(x,top+2,1,3,white); Rect(x,top+4,3,1,white);
+            Rect(x+5,top+1,1,3,white); Rect(x+3,top+3,3,1,white);
+        }
+        static const char* dinosaur[] = {
+            "       ####### ", "      ## ##### ", "      ######## ",
+            "      ######## ", "      ####     ", "      ######   ",
+            "#    #####     ", "#   #######    ", "## ######## #  ",
+            " ##########    ", "  #########    ", "   #######     ",
+            "    #####      ", "    ## ##      ", "    ##  ##     "
+        };
+        int top=13-lroundf(dinoY);
+        for (int y=0;y<15;++y) for (int x=0;x<15;++x) {
+            if (dinosaur[y][x]!='#') continue;
+            // Alternate feet while running; hold the pose in the air.
+            if (y>=13 && !ready && !dead && dinoY==0
+                && ((int(distance/3)&1) ? x<7 : x>=7)) continue;
+            Rect(3+x,top+y,1,1,white);
+        }
+        Score(35);
+    }
     bool GameOver() const { return dead; }
     bool Ready() const { return ready; }
     const RGBColor& Pixel(int x,int y) const { return pixels[y*64+x]; }

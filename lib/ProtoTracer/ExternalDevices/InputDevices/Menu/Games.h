@@ -14,7 +14,7 @@
 class Games {
     static constexpr int VisibleWidth = 51; // 13 of 64 columns (~20%) stay black.
 
-    enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback, ScrollingText, Tetris, Flappy };
+    enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback, ScrollingText, Tetris, Flappy, Dino };
     TextScroller textScroller;
     ArcadeGames arcade;
     bool bsod = false;
@@ -291,7 +291,7 @@ public:
             if (screen == ScrollingText) ButtonHandler::SetTextInputActive(false);
             if (screen == Faces) randomSeed(micros());
             screen = screen == Faces ? Selection : screen == MoviePlayback ? MovieSelection
-                : (screen == Slots || screen == Pong || screen == MovieSelection || screen == ScrollingText || screen == Tetris || screen == Flappy) ? Selection : Faces;
+                : (screen == Slots || screen == Pong || screen == MovieSelection || screen == ScrollingText || screen == Tetris || screen == Flappy || screen == Dino) ? Selection : Faces;
             ButtonHandler::SetGamesInputActive(Active());
         }
         if (!Active()) return;
@@ -299,7 +299,7 @@ public:
         bool left = ButtonHandler::GetLeftPressed();
         int direction = int(right) - int(left);
         bool enter = ButtonHandler::GetOKPressed();
-        if (screen == Selection && direction && !up) selectedGame = (selectedGame + 6 + direction) % 6;
+        if (screen == Selection && direction && !up) selectedGame = (selectedGame + 7 + direction) % 7;
         if (direction && !up && (screen == MovieSelection || screen == MoviePlayback)) {
             selectedMovie = (selectedMovie + Movies::Count + direction) % Movies::Count;
             Movies::Start(selectedMovie);
@@ -311,23 +311,24 @@ public:
         if (screen == MoviePlayback) { Movies::Update(); return; }
         if ((space || (enter && screen == Selection)) && !up) {
             if (screen == Selection) {
-                static const Screen activities[] = {Slots,Pong,MovieSelection,ScrollingText,Tetris,Flappy};
+                static const Screen activities[] = {Slots,Pong,MovieSelection,ScrollingText,Tetris,Flappy,Dino};
                 screen = activities[selectedGame];
                 if (screen == Pong) ResetPong();
                 if (screen == ScrollingText) textScroller.Begin();
                 if (screen == Tetris) arcade.ResetTetris();
                 if (screen == Flappy) arcade.ResetFlappy();
+                if (screen == Dino) arcade.ResetDino();
                 // The launch key must not rotate/drop/flap on the first game frame.
-                if (screen == Tetris || screen == Flappy) { enter=space=down=false; direction=0; }
+                if (screen == Tetris || screen == Flappy || screen == Dino) { enter=space=down=false; direction=0; }
             } else if (screen == Slots && space) Spin();
 
         }
         if (screen == ScrollingText) { textScroller.Update(); return; }
         Rect(0,0,64,32,black);
         if (screen == Selection) {
-            static const char* names[] = {"SLOTS","PONG","MOVIES","TEXT","TETRIS","FLAPPY"};
+            static const char* names[] = {"SLOTS","PONG","MOVIES","TEXT","TETRIS","FLAPPY","DINO"};
             uint8_t first=selectedGame/4*4;
-            for (uint8_t row=0;row<4 && first+row<6;++row)
+            for (uint8_t row=0;row<4 && first+row<7;++row)
                 Text(names[first+row],11,row*8,1,selectedGame==first+row ? white : RGBColor(55,60,65));
             Rect(3,2+(selectedGame%4)*8,4,3,green);
             Rect(60,first ? 24 : 0,2,6,gold);
@@ -340,10 +341,11 @@ public:
             Text("PLAY",20,24,1,green);
             return;
         }
-        if (screen == Tetris || screen == Flappy) {
+        if (screen == Tetris || screen == Flappy || screen == Dino) {
             if (screen == Tetris) arcade.UpdateTetris(dt,up ? 0 : direction,!up && enter,!up && space,!up && down);
+            else if (screen == Dino) arcade.UpdateDino(dt,!up && (space || enter || mouseClick));
             else arcade.UpdateFlappy(dt,!up && (space || enter || mouseClick));
-            if (screen == Tetris) {
+            if (screen == Tetris || screen == Dino) {
                 // Already laid out in the 51-column visible area; do not rescale.
                 for (int y=0;y<32;++y) for (int x=0;x<VisibleWidth;++x)
                     pixels[y*64+x]=arcade.Pixel(x,y);
