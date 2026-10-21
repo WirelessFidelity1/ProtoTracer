@@ -180,6 +180,12 @@ public:
     void Render() {
         uint32_t start = micros();
         controller.ClearSecondPanel();
+        if (Games::Instance().DinoActive()) {
+            // The controller presents the game canvas directly; no 3D pass is needed.
+            UpdatePreview();
+            renderTime = (micros() - start) / 1000000.0f;
+            return;
+        }
         if (IsDVDVisible()) {
             RenderDVD();
             UpdatePreview();
@@ -229,6 +235,13 @@ public:
 
         controller.SetBrightness(Menu::GetBrightness());
         controller.SetAccentBrightness(Menu::GetAccentBrightness());
+
+        if (Games::Instance().DinoActive()) {
+            Menu::Update(ratio);
+            UpdateAntenna();
+            UpdateDVD(false);
+            return;
+        }
 
         if (IsDVDVisible()) {
             Menu::Update(ratio);

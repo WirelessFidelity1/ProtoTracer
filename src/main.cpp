@@ -76,16 +76,16 @@ void loop() {
 
     ButtonHandler::UpdateUSB();
     #if defined(PROJECT_PROTOGEN_HUB75)
-    Games::Instance().Update();
-    // Keep servicing USB while pacing the DVD screensaver at 60 frames/second.
-    static uint32_t dvdFrameTime = 0;
-    if (project.IsDVDVisible()) {
+    // Keep servicing USB while pacing Dino and DVD at 60 frames/second.
+    static uint32_t pacedFrameTime = 0;
+    if (project.IsDVDVisible() || Games::Instance().DinoActive()) {
         uint32_t now = micros();
-        if (now - dvdFrameTime < 16667u) return;
-        dvdFrameTime = now - dvdFrameTime < 33334u ? dvdFrameTime + 16667u : now;
+        if (now - pacedFrameTime < 16667u) return;
+        pacedFrameTime = now - pacedFrameTime < 33334u ? pacedFrameTime + 16667u : now;
     } else {
-        dvdFrameTime = micros();
+        pacedFrameTime = micros();
     }
+    Games::Instance().Update();
     #endif
     #ifndef PROJECT_VERIFY_HARDWARE
     float ratio = (float)(millis() % 5000) / 5000.0f; ///< Calculates animation ratio based on time.

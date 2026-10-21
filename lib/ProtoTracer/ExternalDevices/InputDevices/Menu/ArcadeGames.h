@@ -16,9 +16,10 @@ class ArcadeGames {
     float pipeX[3] = {};
     uint8_t gapY[3] = {};
     bool passed[3] = {};
-    float dinoY = 0, dinoV = 0, distance = 0;
+    float dinoY = 0, dinoV = 0, distance = 0, dinoRunTime = 0;
     float cactusX[2] = {};
     uint8_t cactusHeight[2] = {};
+    bool lastDinoGapWasPair = false;
     RGBColor pixels[64*32];
 
     static bool Cell(uint8_t shape, uint8_t rotation, int x, int y) {
@@ -86,34 +87,42 @@ class ArcadeGames {
 
 public:
     void ResetDino() {
-        dinoY=dinoV=distance=0; score=0; dead=false; ready=true;
+        dinoY=dinoV=distance=dinoRunTime=0; score=0; dead=false; ready=true;
         cactusX[0]=60; cactusX[1]=100;
-        cactusHeight[0]=6; cactusHeight[1]=8;
+        cactusHeight[0]=7; cactusHeight[1]=8;
+        lastDinoGapWasPair=false;
     }
     FLASHMEM __attribute__((noinline)) void UpdateDino(float dt,bool jump) {
         if (dead && jump) ResetDino();
-        // Reach ~13 pixels and stay above the tallest cactus long enough
-        // for its full collision width to pass at the starting speed.
-        if (jump && dinoY<=0) { ready=false; dinoV=52; }
+        // Reach ~16 pixels, leaving a generous window above the tallest cactus.
+        if (jump && dinoY<=0) { ready=false; dinoV=66; }
         if (!dead && !ready) {
             // Small steps prevent fast obstacles skipping the dinosaur.
             for (float remaining=dt;remaining>0 && !dead;) {
                 float step=fminf(remaining,0.005f); remaining-=step;
-                float speed=fminf(34,18+distance/350);
+                // Triple the starting speed within six seconds of play.
+                dinoRunTime=fminf(6,dinoRunTime+step);
+                float speed=18+dinoRunTime*6.0f;
                 distance+=speed*step;
                 score=min(9999,int(distance/5));
-                dinoV-=105*step; dinoY+=dinoV*step;
+                dinoV-=136*step; dinoY+=dinoV*step;
                 if (dinoY<0) { dinoY=0; dinoV=0; }
                 for (int i=0;i<2;++i) {
                     cactusX[i]-=speed*step;
                     if (cactusX[i]<-5) {
-                        // Leave enough time to land and jump again at every speed.
-                        int minimumGap=max(32,int(ceilf(speed*1.25f)));
-                        cactusX[i]=fmaxf(51,cactusX[1-i]+random(minimumGap,minimumGap+15));
-                        cactusHeight[i]=random(5,9);
+                        // Close pairs fit under one jump; isolated obstacles have
+                        // varied recovery gaps. Never chain pairs into a wall.
+                        int pairGap=random(6,max(7,int(speed*0.5f)-8)+1);
+                        bool pair=!lastDinoGapWasPair && speed>=30
+                            && cactusX[1-i]+pairGap>=51 && random(4)==0;
+                        int minimumGap=max(36,int(ceilf(speed*1.5f)));
+                        int gap=pair ? pairGap : random(minimumGap,int(ceilf(speed*2.8f))+15);
+                        cactusX[i]=fmaxf(51,cactusX[1-i]+gap);
+                        lastDinoGapWasPair=pair;
+                        cactusHeight[i]=random(7,10);
                     }
                     // Inset body bounds allow the tail and snout to overhang.
-                    if (cactusX[i]<15 && cactusX[i]+4>9 && dinoY<cactusHeight[i]-1)
+                    if (cactusX[i]+1<13 && cactusX[i]+5>9 && dinoY<cactusHeight[i]-1)
                         dead=true;
                 }
             }
@@ -137,17 +146,16 @@ public:
             Rect(x+5,top+1,1,3,white); Rect(x+3,top+3,3,1,white);
         }
         static const char* dinosaur[] = {
-            "       ####### ", "      ## ##### ", "      ######## ",
-            "      ######## ", "      ####     ", "      ######   ",
-            "#    #####     ", "#   #######    ", "## ######## #  ",
-            " ##########    ", "  #########    ", "   #######     ",
-            "    #####      ", "    ## ##      ", "    ##  ##     "
+            "      ######", "     ## ####", "     #######",
+            "     ###    ", "     #####  ", "#   ####    ",
+            "#  #######  ", " ######## # ", "  #######   ",
+            "   #####    ", "    ## ##   ", "    ##  ##  "
         };
-        int top=13-lroundf(dinoY);
-        for (int y=0;y<15;++y) for (int x=0;x<15;++x) {
+        int top=16-lroundf(dinoY);
+        for (int y=0;y<12;++y) for (int x=0;x<12;++x) {
             if (dinosaur[y][x]!='#') continue;
             // Alternate feet while running; hold the pose in the air.
-            if (y>=13 && !ready && !dead && dinoY==0
+            if (y>=10 && !ready && !dead && dinoY==0
                 && ((int(distance/3)&1) ? x<7 : x>=7)) continue;
             Rect(3+x,top+y,1,1,white);
         }
