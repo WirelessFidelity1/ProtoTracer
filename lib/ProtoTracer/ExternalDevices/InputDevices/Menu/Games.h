@@ -242,7 +242,10 @@ public:
     }
     bool DVDActive() const { return !bsod && screen == MoviePlayback && selectedMovie == 0; }
     bool DinoActive() const { return !bsod && screen == Dino; }
-    bool FastCanvasActive() const { return !bsod && (screen == Dino || screen == Merge); }
+    bool FastCanvasActive() const {
+        return !bsod && (screen == Dino || screen == Merge
+            || (screen == MoviePlayback && Movies::IsScreensaver(selectedMovie)));
+    }
     RGBColor Pixel(int x, int y, bool rearOnLeft = false) const {
         // The blue screen fills both physical panels, including the game margin.
         if (bsod) return x >= 0 && x < 64 && y >= 0 && y < 32 ? pixels[y*64+x] : black;

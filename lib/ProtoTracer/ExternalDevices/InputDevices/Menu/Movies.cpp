@@ -1,7 +1,8 @@
 #include "Movies.h"
+#include "RetroScreensavers.h"
 #include "../../../Assets/Textures/Animated/Utils/MoviesData.h"
 
-static_assert(sizeof(MoviesData::clips) / sizeof(MoviesData::clips[0]) + 1 == Movies::Count,
+static_assert(sizeof(MoviesData::clips) / sizeof(MoviesData::clips[0]) == Movies::PackedCount,
     "Regenerate MoviesData.h when changing the movie list");
 
 namespace {
@@ -9,21 +10,26 @@ namespace {
     uint8_t framePixels[51 * 32];
     uint32_t started = 0;
     uint16_t previousFrame = 0xffff;
+    RetroScreensavers screensavers;
 }
 
 const char* Movies::Name(uint8_t selection) {
-    return selection == 0 ? "DVD" : MoviesData::clips[(selection-1) % (Count-1)].name;
+    selection%=Count;
+    if (selection==PackedCount+1) return "TOASTERS";
+    return selection == 0 ? "DVD" : MoviesData::clips[selection-1].name;
 }
 
 void Movies::Start(uint8_t selection) {
     selected = selection % Count;
     started = millis();
     previousFrame = 0xffff;
+    if (IsScreensaver(selected)) screensavers.Begin();
     Update();
 }
 
 void Movies::Update() {
     if (!selected) return;
+    if (IsScreensaver(selected)) { screensavers.Update(); return; }
     const auto& clip = MoviesData::clips[selected-1];
     uint16_t frame = ((millis()-started) / 42u) % clip.frames;
     if (frame == previousFrame) return;
@@ -44,6 +50,7 @@ void Movies::Update() {
 
 RGBColor Movies::Pixel(int x, int y) {
     if (!selected || x < 0 || x >= 51 || y < 0 || y >= 32) return RGBColor(0,0,0);
+    if (IsScreensaver(selected)) return screensavers.Pixel(x,y);
     const uint8_t* color = MoviesData::clips[selected-1].palette + framePixels[y*51+x]*3;
     return RGBColor(color[0], color[1], color[2]);
 }

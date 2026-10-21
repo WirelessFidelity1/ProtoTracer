@@ -2,19 +2,23 @@ HUB75 movies
 ============
 
 Press Up to open the activity menu. Left/Right cycle Slots, Pong, Movies, Text, Tetris, and Flappy;
-Enter or Space opens the selection. In Movies, Left/Right cycle the five
+Enter or Space opens the selection. In Movies, Left/Right cycle the six
 available clips, and Enter or Space starts playback. Left/Right also switch
 movies during playback. Up returns to the movie picker, then the activity menu,
 then faces. Slots spins with Space; Pong retains its USB mouse paddle controls.
 
 `python tools/build_movies.py` regenerates `MoviesData.h` after texture changes.
-The picker contains DVD, PS2, Rick, Gamecube, and VaporWave. Left/Right also cycle values in
+Install Pillow with `python -m pip install Pillow` for GIF conversion. The generator
+also reads `boyksr.gif` from the repository root, fits it within 51x32 without
+stretching, preserves its original colors, and samples its timing at the existing 42 ms playback interval.
+The picker contains DVD, Rick, Gamecube, VaporWave, Boyksr, and Toasters. Left/Right also cycle values in
 the normal face and settings menus, wrapping at either end.
 
 The generator samples every frame to the uncovered 51x32 panel area and losslessly packs
 the sampled palette indices with run/literal encoding. Original textures and
 palettes are preserved. Playback loops at approximately 24 fps; DVD keeps its
-existing 60 fps animation. Other source assets remain available in the repository
+existing 60 fps animation. Toasters is a procedural screensaver targeting
+60 fps, with diagonally drifting winged toasters and toast. It does not require packed movie assets. Other source assets remain available in the repository
 but are excluded from the picker and packed data. The generator verifies each frame's size,
 palette indices, and compression round trip.
 

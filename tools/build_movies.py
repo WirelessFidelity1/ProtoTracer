@@ -9,7 +9,42 @@ ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / 'lib/ProtoTracer/Assets/Textures/Animated'
 OUT = ASSETS / 'Utils/MoviesData.h'
 WIDTH, HEIGHT = 51, 32
-MOVIES = ('PS2', 'Rick', 'Gamecube', 'VaporWave')
+MOVIES = ('Rick', 'Gamecube', 'VaporWave')
+GIF_MOVIES = {'Boyksr': ROOT / 'boyksr.gif'}
+
+
+def gif_frames(path, invert=False):
+    """Composite GIF frames, preserve aspect ratio, and sample at playback's 42 ms tick."""
+    from PIL import Image, ImageOps
+    from bisect import bisect_right
+    from math import ceil
+
+    frames, ends = [], []
+    duration = 0
+    with Image.open(path) as gif:
+        for index in range(gif.n_frames):
+            gif.seek(index)
+            frame = ImageOps.contain(gif.convert('RGBA'), (WIDTH, HEIGHT), Image.Resampling.LANCZOS)
+            if invert:
+                alpha = frame.getchannel('A')
+                frame = ImageOps.invert(frame.convert('RGB')).convert('RGBA')
+                frame.putalpha(alpha)
+            canvas = Image.new('RGBA', (WIDTH, HEIGHT), (0, 0, 0, 255))
+            canvas.alpha_composite(frame, ((WIDTH-frame.width)//2, (HEIGHT-frame.height)//2))
+            frames.append(canvas.convert('RGB'))
+            duration += max(10, gif.info.get('duration', 100))
+            ends.append(duration)
+    atlas = Image.new('RGB', (WIDTH, HEIGHT*len(frames)))
+    for index, frame in enumerate(frames):
+        atlas.paste(frame, (0, index*HEIGHT))
+    indexed = atlas.quantize(colors=256, dither=Image.Dither.NONE)
+    palette = indexed.getpalette()
+    samples = []
+    for tick in range(ceil(duration/42)):
+        index = bisect_right(ends, tick*42)
+        samples.append(indexed.crop((0, index*HEIGHT, WIDTH, (index+1)*HEIGHT)).tobytes())
+    print(f'{path.name}: {len(frames)} GIF frames, {duration} ms -> {len(samples)} playback frames')
+    return samples, palette
 
 
 def pack(data):
@@ -85,6 +120,19 @@ def build():
         key = path.stem
         output.extend((array(key+'Data', packed), array(key+'Offsets', offsets, 'uint32_t'), array(key+'Palette', palette)))
         clips.append(f'{{"{key.upper()}", {key}Data, {key}Offsets, {key}Palette, {len(order)}}}')
+        total += len(packed)
+    for key, path in GIF_MOVIES.items():
+        samples, palette = gif_frames(path)
+        packed, offsets = bytearray(), []
+        for frame in samples:
+            assert len(frame) == WIDTH*HEIGHT
+            assert max(frame)*3+2 < len(palette)
+            encoded = pack(frame)
+            assert unpack(encoded) == frame, (path, 'compression round trip')
+            offsets.append(len(packed))
+            packed.extend(encoded)
+        output.extend((array(key+'Data', packed), array(key+'Offsets', offsets, 'uint32_t'), array(key+'Palette', palette)))
+        clips.append(f'{{"{key.upper()}", {key}Data, {key}Offsets, {key}Palette, {len(samples)}}}')
         total += len(packed)
     output.append('static const Clip clips[] = {\n' + ',\n'.join(clips) + '\n};\n}\n')
     OUT.write_text(''.join(output))
