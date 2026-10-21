@@ -7,6 +7,7 @@
 #include "Movies.h"
 #include "TextScroller.h"
 #include "ArcadeGames.h"
+#include "MergeSort.h"
 #include "../../../Utils/RGBColor.h"
 
 // Games use a logical 64x32 canvas fitted into the uncovered panel area.
@@ -14,9 +15,10 @@
 class Games {
     static constexpr int VisibleWidth = 51; // 13 of 64 columns (~20%) stay black.
 
-    enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback, ScrollingText, Tetris, Flappy, Dino };
+    enum Screen { Faces, Selection, Slots, Pong, MovieSelection, MoviePlayback, ScrollingText, Tetris, Flappy, Dino, Merge };
     TextScroller textScroller;
     ArcadeGames arcade;
+    MergeSort mergeSort;
     bool bsod = false;
     bool previousBoop = false;
     uint8_t selectedGame = 0;
@@ -240,6 +242,7 @@ public:
     }
     bool DVDActive() const { return !bsod && screen == MoviePlayback && selectedMovie == 0; }
     bool DinoActive() const { return !bsod && screen == Dino; }
+    bool FastCanvasActive() const { return !bsod && (screen == Dino || screen == Merge); }
     RGBColor Pixel(int x, int y, bool rearOnLeft = false) const {
         // The blue screen fills both physical panels, including the game margin.
         if (bsod) return x >= 0 && x < 64 && y >= 0 && y < 32 ? pixels[y*64+x] : black;
@@ -292,7 +295,7 @@ public:
             if (screen == ScrollingText) ButtonHandler::SetTextInputActive(false);
             if (screen == Faces) randomSeed(micros());
             screen = screen == Faces ? Selection : screen == MoviePlayback ? MovieSelection
-                : (screen == Slots || screen == Pong || screen == MovieSelection || screen == ScrollingText || screen == Tetris || screen == Flappy || screen == Dino) ? Selection : Faces;
+                : (screen == Slots || screen == Pong || screen == MovieSelection || screen == ScrollingText || screen == Tetris || screen == Flappy || screen == Dino || screen == Merge) ? Selection : Faces;
             ButtonHandler::SetGamesInputActive(Active());
         }
         if (!Active()) return;
@@ -300,7 +303,7 @@ public:
         bool left = ButtonHandler::GetLeftPressed();
         int direction = int(right) - int(left);
         bool enter = ButtonHandler::GetOKPressed();
-        if (screen == Selection && direction && !up) selectedGame = (selectedGame + 7 + direction) % 7;
+        if (screen == Selection && direction && !up) selectedGame = (selectedGame + 8 + direction) % 8;
         if (direction && !up && (screen == MovieSelection || screen == MoviePlayback)) {
             selectedMovie = (selectedMovie + Movies::Count + direction) % Movies::Count;
             Movies::Start(selectedMovie);
@@ -312,13 +315,14 @@ public:
         if (screen == MoviePlayback) { Movies::Update(); return; }
         if ((space || (enter && screen == Selection)) && !up) {
             if (screen == Selection) {
-                static const Screen activities[] = {Slots,Pong,MovieSelection,ScrollingText,Tetris,Flappy,Dino};
+                static const Screen activities[] = {Slots,Pong,MovieSelection,ScrollingText,Tetris,Flappy,Dino,Merge};
                 screen = activities[selectedGame];
                 if (screen == Pong) ResetPong();
                 if (screen == ScrollingText) textScroller.Begin();
                 if (screen == Tetris) arcade.ResetTetris();
                 if (screen == Flappy) arcade.ResetFlappy();
                 if (screen == Dino) arcade.ResetDino();
+                if (screen == Merge) { mergeSort.Begin(); enter=space=false; direction=0; }
                 // The launch key must not rotate/drop/flap on the first game frame.
                 if (screen == Tetris || screen == Flappy || screen == Dino) { enter=space=down=false; direction=0; }
             } else if (screen == Slots && space) Spin();
@@ -327,9 +331,9 @@ public:
         if (screen == ScrollingText) { textScroller.Update(); return; }
         Rect(0,0,64,32,black);
         if (screen == Selection) {
-            static const char* names[] = {"SLOTS","PONG","MOVIES","TEXT","TETRIS","FLAPPY","DINO"};
+            static const char* names[] = {"SLOTS","PONG","MOVIES","TEXT","TETRIS","FLAPPY","DINO","MERGE"};
             uint8_t first=selectedGame/4*4;
-            for (uint8_t row=0;row<4 && first+row<7;++row)
+            for (uint8_t row=0;row<4 && first+row<8;++row)
                 Text(names[first+row],11,row*8,1,selectedGame==first+row ? white : RGBColor(55,60,65));
             Rect(3,2+(selectedGame%4)*8,4,3,green);
             Rect(60,first ? 24 : 0,2,6,gold);
@@ -340,6 +344,12 @@ public:
             const char* name = Movies::Name(selectedMovie);
             Text(name,(64-int(strlen(name))*6)/2,12,1,white);
             Text("PLAY",20,24,1,green);
+            return;
+        }
+        if (screen == Merge) {
+            mergeSort.Update(dt,!up && (space || mouseClick),!up && enter,up ? 0 : direction);
+            for (int y=0;y<32;++y) for (int x=0;x<VisibleWidth;++x)
+                pixels[y*64+x]=mergeSort.Pixel(x,y);
             return;
         }
         if (screen == Tetris || screen == Flappy || screen == Dino) {

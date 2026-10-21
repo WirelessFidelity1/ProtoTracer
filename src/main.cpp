@@ -76,9 +76,9 @@ void loop() {
 
     ButtonHandler::UpdateUSB();
     #if defined(PROJECT_PROTOGEN_HUB75)
-    // Keep servicing USB while pacing Dino and DVD at 60 frames/second.
+    // Keep servicing USB while pacing game canvases and DVD at 60 frames/second.
     static uint32_t pacedFrameTime = 0;
-    if (project.IsDVDVisible() || Games::Instance().DinoActive()) {
+    if (project.IsDVDVisible() || Games::Instance().FastCanvasActive()) {
         uint32_t now = micros();
         if (now - pacedFrameTime < 16667u) return;
         pacedFrameTime = now - pacedFrameTime < 33334u ? pacedFrameTime + 16667u : now;
