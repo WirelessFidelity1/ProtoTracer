@@ -133,6 +133,37 @@ class Games {
                 if (xx >= 0 && xx < 64 && yy >= 0 && yy < 32)
                     pixels[yy*64 + xx*(bsod ? 64 : VisibleWidth)/64] = c;
     }
+    FLASHMEM __attribute__((noinline)) static RGBColor MenuColor(int hue, uint8_t brightness=255) {
+        hue=(hue%768+768)%768;
+        int section=hue/256, offset=hue%256;
+        return RGBColor((section==0 ? 255-offset : section==2 ? offset : 0)*brightness/255,
+            (section==0 ? offset : section==1 ? 255-offset : 0)*brightness/255,
+            (section==1 ? offset : section==2 ? 255-offset : 0)*brightness/255);
+    }
+    FLASHMEM __attribute__((noinline)) void MenuBackdrop(uint32_t now) {
+        int phase=(now/12)%768;
+        // Dim drifting stars and a slow scan glow behind the lettering.
+        for (int y=0;y<32;++y) {
+            int glow=31-abs(y-(int((now/100)%64)-16));
+            Rect(0,y,64,1,RGBColor(0,max(0,glow)/5,5+max(0,glow)/3));
+        }
+        for (int i=0;i<15;++i) {
+            int x=(i*23+now/(90+i*7))%64;
+            int y=(i*13+3)%32;
+            Rect(x,y,1,1,MenuColor(phase+i*47,35));
+        }
+    }
+    FLASHMEM __attribute__((noinline)) void MenuHighlight(int y,uint32_t now) {
+        int phase=(now/12)%768;
+        for (int x=8;x<57;++x) Rect(x,y,1,8,MenuColor(phase+x*5,18));
+        // Breathing selector and a traveling glint along the right edge.
+        uint8_t pulse=170+int(70*sinf(now*0.004f));
+        Rect(2,y+1,2,5,MenuColor(phase,pulse));
+        Rect(4,y+2,2,3,MenuColor(phase+80,pulse));
+        Rect(6,y+3,1,1,white);
+        Rect(56,y,1,8,MenuColor(phase+160,100));
+        Rect(56,y+int((now/100)%8),1,1,white);
+    }
     void SymbolDraw(int name, int cx, int cy) {
         int x = cx-7, y = cy-7;
         const RGBColor red(235,45,55);
@@ -341,18 +372,36 @@ public:
         Rect(0,0,64,32,black);
         if (screen == Selection) {
             static const char* names[] = {"SLOTS","PONG","MOVIES","TEXT","TETRIS","FLAPPY","DINO","MERGE"};
+            MenuBackdrop(now);
+            MenuHighlight((selectedGame%4)*8,now);
             uint8_t first=selectedGame/4*4;
             for (uint8_t row=0;row<4 && first+row<8;++row)
-                Text(names[first+row],11,row*8,1,selectedGame==first+row ? white : RGBColor(55,60,65));
-            Rect(3,2+(selectedGame%4)*8,4,3,green);
-            Rect(60,first ? 24 : 0,2,6,gold);
+                Text(names[first+row],11,row*8,1,selectedGame==first+row ? white : MenuColor(int(now/30)+row*110,125));
+            for (int page=0;page<2;++page)
+                Rect(60,8+page*10,2,6,MenuColor(int(now/12)+page*150,first/4==page ? 240 : 35));
             return;
         }
         if (screen == MovieSelection) {
-            Text("MOVIES",14,0,1,gold);
+            MenuBackdrop(now);
+            for (int x=0;x<64;++x) {
+                RGBColor color=MenuColor(int(now/12)+x*9,160);
+                Rect(x,9,1,1,color); Rect(x,21,1,1,color);
+            }
+            Text("MOVIES",14,0,1,MenuColor(int(now/12),220));
             const char* name = Movies::Name(selectedMovie);
             Text(name,(64-int(strlen(name))*6)/2,12,1,white);
-            Text("PLAY",20,24,1,green);
+            Text("PLAY",20,24,1,MenuColor(int(now/12)+200,210));
+            // Animated navigation chevrons and clip-position lights.
+            int nudge=(now/450)%2;
+            for (int i=0;i<3;++i) {
+                Rect(2+nudge+i,25+i,1,1,white);
+                Rect(2+nudge+i,25-i,1,1,white);
+                Rect(61-nudge-i,25+i,1,1,white);
+                Rect(61-nudge-i,25-i,1,1,white);
+            }
+            for (int i=0;i<Movies::Count;++i)
+                Rect((64-Movies::Count*3)/2+i*3,31,2,1,
+                    i==selectedMovie ? white : MenuColor(int(now/12)+i*50,45));
             return;
         }
         if (screen == Merge) {

@@ -165,7 +165,8 @@ public:
     }
 
     void UpdatePreview() {
-        RGBColor frame[64 * 32];
+        // Keep the 6 KB preview buffer off the limited rendering stack.
+        DMAMEM static RGBColor frame[64 * 32];
         IPixelGroup* pixels = cameras.GetMainPixelGroup();
         bool activity = Games::Instance().Active() && !IsDVDVisible();
         bool mirrorFace = !Games::Instance().Active();
