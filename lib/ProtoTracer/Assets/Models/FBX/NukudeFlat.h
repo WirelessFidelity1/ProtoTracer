@@ -34,7 +34,8 @@ public:
         Blink,
         BiggerNose,
         MoveEye,
-        HideBlush
+        HideBlush,
+        Wavy
     };
 
 private:
@@ -45,7 +46,7 @@ private:
 	SimpleMaterial simpleMaterial = SimpleMaterial(RGBColor(128, 128, 128));
 	Object3D basisObj = Object3D(&triangleGroup, &triangleGroupMemory, &simpleMaterial);
 
-    static const byte morphCount = 26;
+    static const byte morphCount = 27;
     int FrownIndexes[4] = {16,17,18,19};
     int DoubtIndexes[41] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
     int SurprisedIndexes[41] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
@@ -100,7 +101,14 @@ private:
     Vector3D MoveEyeVectors[15] = {Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f),Vector3D(-6.2779f,4.9326f,0.0000f)};
     Vector3D HideBlushVectors[12] = {Vector3D(29.3262f,48.2032f,0.0000f),Vector3D(22.4307f,32.4422f,0.0000f),Vector3D(13.0726f,31.4571f,0.0000f),Vector3D(15.5353f,58.7927f,0.0000f),Vector3D(6.1772f,60.7628f,0.0000f),Vector3D(3.2220f,32.6885f,0.0000f),Vector3D(-11.5540f,36.3825f,0.0000f),Vector3D(1.0056f,61.9941f,0.0000f),Vector3D(-7.3674f,63.4717f,0.0000f),Vector3D(-20.4195f,40.0765f,0.0000f),Vector3D(-26.5762f,42.7854f,0.0000f),Vector3D(-24.8523f,61.7478f,0.0000f)};
 
-    Morph morphs[26] = {
+    // Narrow slanted eye and a thin wavy mouth, inspired by the visor reference.
+    int WavyIndexes[41] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
+    Vector3D WavyVectors[41] = {Vector3D(0.000000f,0.000000f,0.000000f),Vector3D(61.240600f,1.966300f,-10.262700f),Vector3D(-46.169300f,1.479700f,11.103400f),Vector3D(7.228900f,-2.643600f,3.740600f),Vector3D(-6.191000f,-42.035100f,18.579700f),Vector3D(42.564400f,3.116900f,-25.950600f),Vector3D(64.064400f,15.496400f,-21.001100f),Vector3D(5.856200f,-7.745700f,2.542400f),Vector3D(27.896300f,-10.227600f,-7.822500f),Vector3D(-36.009600f,15.968600f,18.511200f),Vector3D(9.883300f,11.292400f,-5.643200f),Vector3D(1.048700f,-26.146100f,13.424700f),Vector3D(33.318600f,6.370700f,-15.173700f),Vector3D(23.135200f,-29.645300f,1.852000f),Vector3D(-37.815400f,38.481100f,14.339400f),Vector3D(-30.048700f,-1.440800f,21.351800f),Vector3D(-3.086300f,-12.848139f,0.000000f),Vector3D(3.086300f,-15.417539f,0.000000f),Vector3D(-2.984600f,2.089025f,0.000000f),Vector3D(2.984600f,4.089225f,0.000000f),Vector3D(-3.155800f,-0.299889f,0.000000f),Vector3D(3.155800f,6.036111f,0.000000f),Vector3D(0.000000f,0.000000f,0.000000f),Vector3D(0.000000f,0.000000f,0.000000f),Vector3D(0.000000f,0.000000f,0.000000f),Vector3D(0.000000f,0.000000f,0.000000f),Vector3D(0.000000f,0.000000f,0.000000f),Vector3D(0.000000f,0.000000f,0.000000f),Vector3D(0.000000f,0.000000f,0.000000f),Vector3D(7.142600f,28.534491f,0.000000f),Vector3D(-7.142600f,21.261891f,0.000000f),Vector3D(5.721200f,39.311562f,0.000000f),Vector3D(-5.721200f,32.761162f,0.000000f),Vector3D(7.394500f,28.953253f,0.000000f),Vector3D(-7.394500f,21.702153f,0.000000f),Vector3D(4.895700f,22.589182f,0.000000f),Vector3D(-4.895700f,16.331482f,0.000000f),Vector3D(4.529900f,25.785130f,0.000000f),Vector3D(-4.529900f,16.981430f,0.000000f),Vector3D(3.685300f,19.676022f,0.000000f),Vector3D(-3.685300f,11.124122f,0.000000f)};
+
+    // Wavy uses a dedicated chevron outline instead of folding the round eye mesh.
+    IndexGroup WavyTriangles[44] = {IndexGroup(1,2,5),IndexGroup(1,5,6),IndexGroup(2,3,4),IndexGroup(2,4,5),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(34,36,35),IndexGroup(19,18,16),IndexGroup(21,20,18),IndexGroup(23,24,22),IndexGroup(25,26,27),IndexGroup(28,27,23),IndexGroup(37,38,40),IndexGroup(31,29,30),IndexGroup(32,34,33),IndexGroup(36,38,37),IndexGroup(39,40,20),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(7,7,7),IndexGroup(33,34,35),IndexGroup(17,19,16),IndexGroup(19,21,18),IndexGroup(0,23,22),IndexGroup(28,25,27),IndexGroup(0,28,23),IndexGroup(39,37,40),IndexGroup(32,31,30),IndexGroup(31,32,33),IndexGroup(35,36,37),IndexGroup(21,39,20),IndexGroup(50,52,49),IndexGroup(48,45,47),IndexGroup(42,43,44),IndexGroup(44,41,42),IndexGroup(52,50,51),IndexGroup(47,45,46)};
+
+    Morph morphs[27] = {
         Morph(4, FrownIndexes, FrownVectors),
         Morph(41, DoubtIndexes, DoubtVectors),
         Morph(41, SurprisedIndexes, SurprisedVectors),
@@ -126,7 +134,8 @@ private:
         Morph(41, BlinkIndexes, BlinkVectors),
         Morph(8, BiggerNoseIndexes, BiggerNoseVectors),
         Morph(15, MoveEyeIndexes, MoveEyeVectors),
-        Morph(12, HideBlushIndexes, HideBlushVectors)
+        Morph(12, HideBlushIndexes, HideBlushVectors),
+        Morph(41, WavyIndexes, WavyVectors)
     };
 
 public:
@@ -152,6 +161,16 @@ public:
 
     void Update(){
         basisObj.ResetVertices();
+
+        // Restore the normal topology when leaving Wavy, including during transitions.
+        ITriangleGroup* group = basisObj.GetTriangleGroup();
+        const IndexGroup* topology = morphs[Wavy].Weight > 0.5f ? WavyTriangles : basisIndexes;
+        Vector3D* vertices = group->GetVertices();
+        for (int t = 0; t < group->GetTriangleCount(); ++t) {
+            group->GetTriangles()[t].p1 = &vertices[topology[t].A];
+            group->GetTriangles()[t].p2 = &vertices[topology[t].B];
+            group->GetTriangles()[t].p3 = &vertices[topology[t].C];
+        }
 
         for(int i = 0; i < morphCount; i++){
             if(morphs[i].Weight > 0.0f){

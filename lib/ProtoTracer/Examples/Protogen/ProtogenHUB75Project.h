@@ -17,6 +17,7 @@ private:
     NukudeFace pM;
     DeltaDisplayBackground deltaDisplayBackground;
     DVD dvd;
+    bool wavySelected = false;
     SimpleMaterial dvdMaterial = SimpleMaterial(RGBColor(30, 220, 255));
     Vector2D dvdPosition = Vector2D(21, 15);
     Vector2D dvdVelocity = Vector2D(27, 18);
@@ -87,10 +88,11 @@ private:
         }
     }
     
-	const __FlashStringHelper* faceArray[9] = {F("DEFAULT"), F("ANGRY"), F("DOUBT"), F("FROWN"), F("LOOKUP"), F("SAD"), F("AUDIO1"), F("AUDIO2"), F("AUDIO3")};
+	const __FlashStringHelper* faceArray[10] = {F("DEFAULT"), F("ANGRY"), F("DOUBT"), F("FROWN"), F("LOOKUP"), F("SAD"), F("AUDIO1"), F("AUDIO2"), F("AUDIO3"), F("WAVY")};
 
     void LinkControlParameters() override {//Called from parent
         AddParameter(NukudeFace::Anger, pM.GetMorphWeightReference(NukudeFace::Anger), 15);
+        AddParameter(NukudeFace::Wavy, pM.GetMorphWeightReference(NukudeFace::Wavy), 15);
         AddParameter(NukudeFace::Sadness, pM.GetMorphWeightReference(NukudeFace::Sadness), 15, IEasyEaseAnimator::InterpolationMethod::Cosine);
         AddParameter(NukudeFace::Surprised, pM.GetMorphWeightReference(NukudeFace::Surprised), 15);
         AddParameter(NukudeFace::Doubt, pM.GetMorphWeightReference(NukudeFace::Doubt), 15);
@@ -112,6 +114,12 @@ private:
     }
 
     void Default(){}
+
+    void Wavy(){
+        wavySelected = true;
+        AddParameterFrame(NukudeFace::Wavy, 1.0f);
+        AddMaterialFrame(Color::CWHITE);
+    }
 
     void Angry(){
         AddParameterFrame(NukudeFace::Anger, 1.0f);
@@ -160,6 +168,11 @@ private:
 
     // use dummy 34 pin for button, using usb keyboard for input, so no button is needed
 public:
+#ifdef PROTOTRACER_SIMULATOR
+    bool WavyEyeIsOpen() {
+        return wavySelected && *pM.GetMorphWeightReference(NukudeFace::Blink) == 0.0f;
+    }
+#endif
     bool IsDVDVisible() {
         return Games::Instance().DVDActive();
     }
@@ -208,7 +221,7 @@ public:
         renderTime = (micros() - start) / 1000000.0f;
     }
 
-    ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 3, Vector2D(), Vector2D(192.0f, 94.0f), 22, 34, 9){
+    ProtogenHUB75Project() : ProtogenProject(&cameras, &controller, 3, Vector2D(), Vector2D(192.0f, 94.0f), 22, 34, 10){
         hud.UseExternalPreview();
         scene.AddObject(pM.GetObject());
         scene.AddObject(deltaDisplayBackground.GetObject());
@@ -231,57 +244,7 @@ public:
         SetMenuSize(Vector2D(192, 56));
     }
 
-    void Update(float ratio) override {
-        uint8_t mode = Menu::GetFaceState();//change by button press
-
-        controller.SetBrightness(Menu::GetBrightness());
-        controller.SetAccentBrightness(Menu::GetAccentBrightness());
-
-        if (Games::Instance().FastCanvasActive()) {
-            Menu::Update(ratio);
-            Games::Instance().UpdateBoop(UpdateBoopSensor());
-            UpdateAntenna();
-            UpdateDVD(false);
-            return;
-        }
-
-        if (IsDVDVisible()) {
-            Menu::Update(ratio);
-            UpdateAntenna();
-            UpdateDVD(true);
-            pM.GetObject()->Disable();
-            deltaDisplayBackground.GetObject()->Disable();
-            return;
-        }
-
-        pM.Reset();
-
-#ifdef MORSEBUTTON
-        SelectFaceFromMorse(mode);
-#else
-        SelectFace(mode);
-#endif
-
-        UpdateFace(ratio);
-        Games::Instance().UpdateBoop(Menu::UseBoopSensor() && IsBooped());
-
-        bool showDVD = IsDVDVisible();
-        UpdateDVD(showDVD);
-        if (showDVD) {
-            pM.GetObject()->Disable();
-            deltaDisplayBackground.GetObject()->Disable();
-        } else {
-            pM.GetObject()->Enable();
-            deltaDisplayBackground.GetObject()->Enable();
-        }
-
-        pM.Update();
-
-        AlignObjectFace(pM.GetObject(), -7.5f);
-
-        pM.GetObject()->GetTransform()->SetPosition(GetWiggleOffset());
-        pM.GetObject()->UpdateTransform();
-    }
+    void Update(float ratio) override;
 
     void SelectFace(uint8_t code) {
         if (IsBooped() && code != 6) {
@@ -298,7 +261,9 @@ public:
             case 5: Sad();      break;
             case 6: AudioReactiveGradientFace();    break;
             case 7: OscilloscopeFace();             break;
-            default: SpectrumAnalyzerFace();        break;
+            case 8: SpectrumAnalyzerFace();        break;
+            case 9: Wavy();                        break;
+            default: Default();                    break;
         }
     }
 
@@ -319,6 +284,7 @@ public:
             case 24: AudioReactiveGradientFace();   break; // [X] X.X
             case 25: OscilloscopeFace();            break; // [Y] Oscilloscope
             case 26: SpectrumAnalyzerFace();        break; // [Z] Spectrum
+            case 23: Wavy();                        break; // [W] Wavy
             default: Default();     break; // [H] Happy
         }
     }

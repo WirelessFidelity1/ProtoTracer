@@ -1,6 +1,11 @@
 HUB75 movies
 ============
 
+GIF imports are temporarily commented out in `build_movies.py`. The active
+movie picker contains DVD, Rick, Gamecube, and VaporWave. Source GIFs are kept.
+To restore them, uncomment the `GIF_MOVIES` population block, regenerate
+`MoviesData.h`, and update `Movies::PackedCount` to the generated clip count.
+
 ## Face shape editor
 
 Double-click **Run Face Editor.cmd** in this folder. Requires Python 3 with

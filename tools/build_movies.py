@@ -10,12 +10,14 @@ ASSETS = ROOT / 'lib/ProtoTracer/Assets/Textures/Animated'
 OUT = ASSETS / 'Utils/MoviesData.h'
 WIDTH, HEIGHT = 51, 32
 MOVIES = ('Rick', 'Gamecube', 'VaporWave')
-GIF_MOVIES = {'Boyksr': ROOT / 'boyksr.gif'}
-GIF_MOVIES.update({
-    'Gif' + re.sub(r'[^A-Za-z0-9]', '', path.stem): path
-    for path in sorted((ROOT / 'gifs').glob('*'), key=lambda path: path.name.lower())
-    if path.suffix.lower() == '.gif' and path.stem.lower() != 'jork'
-})
+# Temporarily disabled: keep the source GIFs, but omit them from the firmware.
+GIF_MOVIES = {}
+# GIF_MOVIES = {'Boyksr': ROOT / 'boyksr.gif'}
+# GIF_MOVIES.update({
+#     'Gif' + re.sub(r'[^A-Za-z0-9]', '', path.stem): path
+#     for path in sorted((ROOT / 'gifs').glob('*'), key=lambda path: path.name.lower())
+#     if path.suffix.lower() == '.gif' and path.stem.lower() != 'jork'
+# })
 
 
 def gif_frames(path, invert=False):

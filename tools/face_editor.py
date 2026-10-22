@@ -210,7 +210,8 @@ class Editor:
         a, b = self.axes()
         vs = self.model.vertices(self.mode.get(), self.weight.get())
         self.points = [(self.cx+v[a]*self.scale, self.cy-v[b]*self.scale) for v in vs]
-        for tri in self.model.arrays['basisIndexes']:
+        topology = 'WavyTriangles' if self.mode.get() == 'Wavy' and self.weight.get() > .5 and 'WavyTriangles' in self.model.arrays else 'basisIndexes'
+        for tri in self.model.arrays[topology]:
             coords = [c for i in tri for c in self.points[int(i)]]
             self.canvas.create_polygon(coords, fill='#207d78', outline='#3ca49c' if self.wire.get() else '')
         editable = set(self.editable())

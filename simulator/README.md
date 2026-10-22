@@ -46,6 +46,10 @@ Enable BOOP in the firmware settings for sensor actions. Release between Dino
 jumps. F2 remains available during text entry. Mouse inputs are confined to the
 simulator window; it does not capture system-wide keyboard or mouse events.
 
+The face picker includes **WAVY** after AUDIO3: a reference-inspired narrow
+slanted eye and wavy mouth. Its editable morph is **Wavy** in `NukudeFlat.h`.
+This face is also included in the Teensy HUB75 build (Morse shortcut: W).
+
 The microphone input is a synthetic signal, not a recording of the Windows
 microphone. Fan outputs and I²C/USB electronics are emulated. LED hardware
 brightness, refresh artifacts, and physical sensors are not reproduced.

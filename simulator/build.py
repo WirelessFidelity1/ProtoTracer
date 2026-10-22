@@ -29,6 +29,7 @@ def main():
     for file in (
         'Controller/Controller.cpp', 'Controller/HUB75Controller.cpp',
         'Examples/Templates/Project.cpp', 'Examples/Templates/ProtogenProjectTemplate.cpp',
+        'Examples/Templates/ProtogenHUB75Update.cpp',
         'ExternalDevices/InputDevices/ButtonHandler.cpp',
         'ExternalDevices/InputDevices/Menu/Menu.cpp',
         'ExternalDevices/InputDevices/Menu/Movies.cpp',

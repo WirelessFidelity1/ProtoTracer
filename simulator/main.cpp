@@ -154,7 +154,13 @@ static int SelfTest() {
         check(std::any_of(std::begin(Simulator::oled),std::end(Simulator::oled),[](uint8_t c){return c!=0;}),"OLED renders firmware HUD");
         Screenshot("simulator-face.bmp");
         for(int i=0;i<9;++i) { Press(VK_RIGHT); Frames(10); }
-        check(Menu::GetFaceState()==0,"face selection wraps through all nine faces");
+        check(Menu::GetFaceState()==9,"Wavy face is selectable");
+        Frames(120); Screenshot("simulator-wavy.bmp");
+        bool wavyNeverBlinks = true;
+        for(int i=0;i<600;++i) { Frames(1); wavyNeverBlinks &= project.WavyEyeIsOpen(); }
+        check(wavyNeverBlinks,"Wavy eye stays open through the blink cycle");
+        Press(VK_RIGHT); Frames(10);
+        check(Menu::GetFaceState()==0,"face selection wraps through all ten faces");
         Press(VK_RETURN); check(Menu::GetCurrentMenu()==1,"Enter advances firmware settings");
         for(int i=0;i<12;++i) Press(VK_RETURN);
         check(Menu::GetCurrentMenu()==0,"settings navigation wraps to faces");
