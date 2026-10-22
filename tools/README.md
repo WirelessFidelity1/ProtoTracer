@@ -1,6 +1,38 @@
 HUB75 movies
 ============
 
+## Face shape editor
+
+Double-click **Run Face Editor.cmd** in this folder. Requires Python 3 with
+Tcl/Tk (included in the standard Windows Python installer); no extra packages.
+The launcher also detects PlatformIO's Python.
+
+The editor opens `NukudeFlat.h`, used by the HUB75 and WS35 projects (its C++
+class is named `NukudeFace`). `NukudeFace.h` is a separate model that these
+projects do not load. Open header also
+supports `GammaFace.h` and other generated headers with the same array format.
+Select **Base shape** to reshape the neutral face, or select an expression to
+edit its existing morph offsets. Drag cyan vertices; Shift-click selects several
+points to move together. Use XY/XZ/YZ views and coordinate fields for depth edits.
+The preview slider blends the selected expression; dragging requires 100%.
+Mouse wheel zooms, right-drag pans, and Fit view recenters the model.
+
+**Save + backup** writes the header and creates a timestamped `.bak` beside it.
+Ctrl+Z undoes edits; closing with unsaved edits asks before discarding them.
+Rebuild the simulator (`simulator/Start-Simulator.ps1 -Build`) or firmware to see
+the changes there. Restore a backup by copying it over the original header.
+
+This edits existing vertices and expressions, preserving triangle topology,
+expression names, and animation code. Base changes carry through to expressions;
+expression editing is limited to vertices already affected by that expression.
+The view is an orthographic mesh preview, not a simulation of the panel layout,
+materials, or combined runtime animations. Adding geometry or new morphs still
+requires the full modeling/export workflow.
+
+For a Windows preview with the same faces, menus, movies, and games, see
+[`simulator/README.md`](../simulator/README.md). Double-click
+`simulator/Run Simulator.cmd` to launch it without a Teensy.
+
 Press Up to open the activity menu. Left/Right cycle Slots, Pong, Movies, Text, Tetris, and Flappy;
 Enter or Space opens the selection. In Movies, Left/Right cycle the twelve
 available clips, and Enter or Space starts playback. Left/Right also switch
