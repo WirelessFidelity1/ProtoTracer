@@ -32,6 +32,8 @@ private:
     static volatile bool leftPressed;
     static volatile bool bPressed;
     static bool bHeld;
+    static volatile bool mPressed;
+    static bool mHeld;
     static volatile bool okPressed;
     static volatile bool upPressed;
     static volatile bool spacePressed;
@@ -91,6 +93,7 @@ public:
     static bool GetRightPressed();
     static bool GetLeftPressed();
     static bool GetBPressed();
+    static bool GetMPressed();
     static void SetTextInputActive(bool active);
     static int ReadTextKey();
 

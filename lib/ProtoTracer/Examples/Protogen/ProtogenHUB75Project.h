@@ -18,6 +18,8 @@ private:
     DeltaDisplayBackground deltaDisplayBackground;
     DVD dvd;
     bool wavySelected = false;
+    bool matrixEnabled = false;
+    void ApplyMatrix();
     SimpleMaterial dvdMaterial = SimpleMaterial(RGBColor(30, 220, 255));
     Vector2D dvdPosition = Vector2D(21, 15);
     Vector2D dvdVelocity = Vector2D(27, 18);
@@ -168,6 +170,7 @@ private:
 
     // use dummy 34 pin for button, using usb keyboard for input, so no button is needed
 public:
+    bool MatrixEnabled() const { return matrixEnabled; }
 #ifdef PROTOTRACER_SIMULATOR
     bool WavyEyeIsOpen() {
         return wavySelected && *pM.GetMorphWeightReference(NukudeFace::Blink) == 0.0f;
@@ -213,10 +216,12 @@ public:
             float coordinateSum = pixels->GetCoordinate(0).X + pixels->GetCoordinate(63).X;
             Menu::SetRenderMirrorX(true, coordinateSum);
             Project::Render();
+            ApplyMatrix();
             controller.CaptureSecondPanel(pixels->GetColors());
             Menu::SetRenderMirrorX(false);
         }
         Project::Render();
+        ApplyMatrix();
         UpdatePreview();
         renderTime = (micros() - start) / 1000000.0f;
     }

@@ -37,6 +37,7 @@ the firmware code. Settings are saved beside the executable in
 | Mouse movement | Pong paddle |
 | Left click | Game action |
 | B | Toggle the blue screen (types B in Text) |
+| M | Toggle Matrix green rain on faces (types M in Text) |
 | Typing / Backspace / Enter | Edit and start the text scroller |
 | F2 or right mouse button | Hold the simulated boop sensor |
 | F3 | Toggle synthetic microphone input |
@@ -49,6 +50,11 @@ simulator window; it does not capture system-wide keyboard or mouse events.
 The face picker includes **WAVY** after AUDIO3: a reference-inspired narrow
 slanted eye and wavy mouth. Its editable morph is **Wavy** in `NukudeFlat.h`.
 This face is also included in the Teensy HUB75 build (Morse shortcut: W).
+
+Press **M** on a face to toggle animated Matrix green rain. It applies to all
+face selections, leaving activities and settings readable. The toggle lasts
+until the simulator or Teensy restarts. A USB keyboard on the Teensy uses the
+same key; hold/repeat does not repeatedly toggle it.
 
 The microphone input is a synthetic signal, not a recording of the Windows
 microphone. Fan outputs and I²C/USB electronics are emulated. LED hardware

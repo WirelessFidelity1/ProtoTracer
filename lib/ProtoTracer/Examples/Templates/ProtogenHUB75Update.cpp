@@ -4,6 +4,7 @@
 #include "../Protogen/ProtogenHUB75Project.h"
 
 FLASHMEM __attribute__((noinline)) void ProtogenHUB75Project::Update(float ratio) {
+    if (ButtonHandler::GetMPressed() && !Games::Instance().Active()) matrixEnabled = !matrixEnabled;
     uint8_t mode = Menu::GetFaceState();//change by button press
 
     controller.SetBrightness(Menu::GetBrightness());
@@ -100,5 +101,27 @@ FLASHMEM __attribute__((noinline)) void ProtogenHUB75Project::Update(float ratio
 
     pM.GetObject()->GetTransform()->SetPosition(GetWiggleOffset());
     pM.GetObject()->UpdateTransform();
+}
+
+FLASHMEM __attribute__((noinline)) void ProtogenHUB75Project::ApplyMatrix() {
+    if (!matrixEnabled || Games::Instance().Active()) return;
+    // Do not recolor the settings menu while it slides across the face.
+    if (Menu::GetPosition().Y < 96.0f) return;
+    IPixelGroup* pixels = cameras.GetMainPixelGroup();
+    uint32_t tick = millis() / 70u;
+    for (int y = 0; y < 32; ++y) for (int x = 0; x < 64; ++x) {
+        RGBColor* pixel = pixels->GetColor((31-y)*64+x);
+        bool face = pixel->R || pixel->G || pixel->B;
+        uint32_t column = x / 4;
+        uint32_t seed = column * 1103515245u + 12345u;
+        int head = (tick / (1u + ((seed >> 8) & 1u)) + (seed >> 16)) % 48;
+        int age = (head - y + 48) % 48;
+        // Small changing glyph fragments, with a bright head and fading trail.
+        uint32_t glyph = seed ^ ((tick / 4 + y / 4) * 2654435761u);
+        bool ink = (x % 4 != 3) && (y % 4 != 3) && ((glyph >> ((y%4)*3+x%4)) & 1u);
+        int rain = age < 14 && ink ? (14-age)*15 : 0;
+        if (face) *pixel = RGBColor(rain > 180 ? 90 : 0, 65 + rain*190/210, rain > 180 ? 110 : 8);
+        else *pixel = RGBColor(0, rain/4, 0);
+    }
 }
 #endif

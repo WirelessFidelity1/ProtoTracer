@@ -25,7 +25,7 @@ static uint8_t HID(WPARAM key) {
         case VK_UP:return 0x52; case VK_DOWN:return 0x51;
         case VK_LEFT:return 0x50; case VK_RIGHT:return 0x4f;
         case VK_RETURN:return 0x28; case VK_SPACE:return 0x2c;
-        case VK_ESCAPE:return 0x29; case 'B':return 0x05;
+        case VK_ESCAPE:return 0x29; case 'B':return 0x05; case 'M':return 0x10;
         default:return 0;
     }
 }
@@ -85,7 +85,7 @@ static void Draw(HDC dc) {
     Label(dc,450,510,status);
     snprintf(status,sizeof(status),"Frame %.1f ms   /   BOOP setting: %s",frameMs,Menu::UseBoopSensor() ? "ON" : "OFF"); Label(dc,450,540,status);
     Label(dc,28,593,"Up: activities / back    Left / Right: select    Enter: settings / launch    Space: action");
-    Label(dc,28,620,"Mouse: Pong paddle + left click actions    B: blue screen    Text: type normally, Backspace to edit");
+    Label(dc,28,620,"Mouse: Pong paddle    B: blue screen    M: Matrix face effect    Text: type normally");
     Label(dc,28,647,"Enable BOOP in settings for sensor actions. F2 works while typing. Close window to quit.");
     SelectObject(dc,old); DeleteObject(font);
 }
@@ -138,7 +138,7 @@ static LRESULT CALLBACK WindowProc(HWND window,UINT message,WPARAM key,LPARAM pa
             audioEnabled=Simulator::audioLevel>0; return 0;
         case WM_KILLFOCUS:
             Simulator::boop=false; Simulator::mouseButtons=0; Simulator::mouseChanged=true; previousMouseY=-1;
-            if(Simulator::rawRelease) Simulator::rawRelease(0x05); return 0;
+            if(Simulator::rawRelease) { Simulator::rawRelease(0x05); Simulator::rawRelease(0x10); } return 0;
         case WM_DESTROY:running=false; PostQuitMessage(0); return 0;
     }
     return DefWindowProcA(window,message,key,param);
@@ -153,6 +153,12 @@ static int SelfTest() {
         check(std::any_of(std::begin(Simulator::panels),std::end(Simulator::panels),[](rgb24 c){return c.red||c.green||c.blue;}),"face renderer produces pixels");
         check(std::any_of(std::begin(Simulator::oled),std::end(Simulator::oled),[](uint8_t c){return c!=0;}),"OLED renders firmware HUD");
         Screenshot("simulator-face.bmp");
+        Press('M'); Frames(60);
+        check(project.MatrixEnabled(),"M enables Matrix face effect");
+        Screenshot("simulator-matrix.bmp");
+        Key('M',true); Frames(1); Key('M',true); Frames(1);
+        check(!project.MatrixEnabled(),"held M does not repeatedly toggle Matrix");
+        Key('M',false);
         for(int i=0;i<9;++i) { Press(VK_RIGHT); Frames(10); }
         check(Menu::GetFaceState()==9,"Wavy face is selectable");
         Frames(120); Screenshot("simulator-wavy.bmp");
