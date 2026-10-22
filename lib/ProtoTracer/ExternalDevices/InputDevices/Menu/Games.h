@@ -21,6 +21,7 @@ class Games {
     MergeSort mergeSort;
     bool bsod = false;
     bool previousBoop = false;
+    bool pendingDinoBoop = false;
     uint8_t selectedGame = 0;
     uint8_t selectedMovie = 0;
     float paddleY = 16, aiY = 16;
@@ -170,7 +171,7 @@ class Games {
 
     void Text(const char* text, int x, int y, int scale, RGBColor c) {
         // Five-bit rows of the original block font, plus menu glyphs.
-        static const char letters[] = "WINLOSEGAM PCTURHDVBFXY2K31";
+        static const char letters[] = "WINLOSEGAM PCTURHDVBFXY2K31J";
         static const uint8_t glyphs[][7] = {
             {17,17,21,21,21,27,17},{31,4,4,4,4,4,31},{17,25,25,21,19,19,17},
             {16,16,16,16,16,16,31},{14,17,17,17,17,17,14},{15,16,16,14,1,1,30},
@@ -180,7 +181,8 @@ class Games {
             {17,17,17,17,17,17,14},{30,17,17,30,20,18,17},{17,17,17,31,17,17,17},
             {30,17,17,17,17,17,30},{17,17,17,17,17,10,4},{30,17,17,30,17,17,30},
             {31,16,16,30,16,16,16},{17,17,10,4,10,17,17},{17,17,10,4,4,4,4},
-            {14,17,1,2,4,8,31},{17,18,20,24,20,18,17},{30,1,1,14,1,1,30},{4,12,4,4,4,4,14}
+            {14,17,1,2,4,8,31},{17,18,20,24,20,18,17},{30,1,1,14,1,1,30},{4,12,4,4,4,4,14},
+            {7,2,2,2,18,18,12}
         };
         for (; *text; ++text, x += 6*scale) {
             const char* found = strchr(letters, *text);
@@ -228,6 +230,7 @@ public:
         bool pressed = booped && !previousBoop;
         previousBoop = booped;
         if (pressed && !bsod && screen == Slots) Spin();
+        if (pressed && !bsod && screen == Dino) pendingDinoBoop = true;
     }
     static Games& Instance() { static Games games; return games; }
     bool Active() const { return bsod || screen != Faces; }
@@ -258,6 +261,9 @@ public:
         return pixels[y*64+localX];
     }
     FLASHMEM __attribute__((noinline)) void Update() {
+        // Sensor updates arrive after the game update; consume once next frame.
+        bool dinoBoop = pendingDinoBoop;
+        pendingDinoBoop = false;
         uint32_t now = millis();
         float dt = last ? (now-last)/1000.0f : 0;
         last = now;
@@ -357,7 +363,7 @@ public:
         }
         if (screen == Tetris || screen == Flappy || screen == Dino) {
             if (screen == Tetris) arcade.UpdateTetris(dt,up ? 0 : direction,!up && enter,!up && space,!up && down);
-            else if (screen == Dino) arcade.UpdateDino(dt,!up && (space || enter || mouseClick));
+            else if (screen == Dino) arcade.UpdateDino(dt,!up && (space || enter || mouseClick || dinoBoop));
             else arcade.UpdateFlappy(dt,!up && (space || enter || mouseClick));
             if (screen == Tetris || screen == Dino) {
                 // Already laid out in the 51-column visible area; do not rescale.

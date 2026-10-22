@@ -557,6 +557,7 @@ protected:
      * @return True if booped, false otherwise.
      */
     bool IsBooped();
+    bool UpdateBoopSensor();
 
     /**
      * @brief Computes and returns a Vector3D offset for a "wiggle" effect using function generators.

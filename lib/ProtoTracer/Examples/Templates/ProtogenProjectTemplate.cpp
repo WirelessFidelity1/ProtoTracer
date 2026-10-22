@@ -183,9 +183,7 @@ void ProtogenProject::UpdateFace(float ratio) {
     xOffset = fGenMatXMove.Update();
     yOffset = fGenMatYMove.Update();
     
-    if (Menu::UseBoopSensor()) {
-        isBooped = boop.isBooped();
-    }
+    UpdateBoopSensor();
 
     hud.SetEffect(Menu::GetEffect());// Pull Effect from menu and store reference in hud for observing data
     hud.Update();
@@ -572,6 +570,11 @@ void ProtogenProject::EnableBlinking(){
 }
 
 bool ProtogenProject::IsBooped(){
+    return isBooped;
+}
+
+bool ProtogenProject::UpdateBoopSensor() {
+    isBooped = Menu::UseBoopSensor() && boop.isBooped();
     return isBooped;
 }
 

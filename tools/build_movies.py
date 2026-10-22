@@ -11,6 +11,11 @@ OUT = ASSETS / 'Utils/MoviesData.h'
 WIDTH, HEIGHT = 51, 32
 MOVIES = ('Rick', 'Gamecube', 'VaporWave')
 GIF_MOVIES = {'Boyksr': ROOT / 'boyksr.gif'}
+GIF_MOVIES.update({
+    'Gif' + re.sub(r'[^A-Za-z0-9]', '', path.stem): path
+    for path in sorted((ROOT / 'gifs').glob('*'), key=lambda path: path.name.lower())
+    if path.suffix.lower() == '.gif' and path.stem.lower() != 'jork'
+})
 
 
 def gif_frames(path, invert=False):
@@ -132,7 +137,8 @@ def build():
             offsets.append(len(packed))
             packed.extend(encoded)
         output.extend((array(key+'Data', packed), array(key+'Offsets', offsets, 'uint32_t'), array(key+'Palette', palette)))
-        clips.append(f'{{"{key.upper()}", {key}Data, {key}Offsets, {key}Palette, {len(samples)}}}')
+        label = path.stem.upper().replace('\\', '\\\\').replace('"', '\\"')
+        clips.append(f'{{"{label}", {key}Data, {key}Offsets, {key}Palette, {len(samples)}}}')
         total += len(packed)
     output.append('static const Clip clips[] = {\n' + ',\n'.join(clips) + '\n};\n}\n')
     OUT.write_text(''.join(output))

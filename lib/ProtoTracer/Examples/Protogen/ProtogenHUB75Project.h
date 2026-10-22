@@ -238,6 +238,7 @@ public:
 
         if (Games::Instance().FastCanvasActive()) {
             Menu::Update(ratio);
+            Games::Instance().UpdateBoop(UpdateBoopSensor());
             UpdateAntenna();
             UpdateDVD(false);
             return;

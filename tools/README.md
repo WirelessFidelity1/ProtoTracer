@@ -2,7 +2,7 @@ HUB75 movies
 ============
 
 Press Up to open the activity menu. Left/Right cycle Slots, Pong, Movies, Text, Tetris, and Flappy;
-Enter or Space opens the selection. In Movies, Left/Right cycle the six
+Enter or Space opens the selection. In Movies, Left/Right cycle the twelve
 available clips, and Enter or Space starts playback. Left/Right also switch
 movies during playback. Up returns to the movie picker, then the activity menu,
 then faces. Slots spins with Space; Pong retains its USB mouse paddle controls.
@@ -11,14 +11,15 @@ then faces. Slots spins with Space; Pong retains its USB mouse paddle controls.
 Install Pillow with `python -m pip install Pillow` for GIF conversion. The generator
 also reads `boyksr.gif` from the repository root, fits it within 51x32 without
 stretching, preserves its original colors, and samples its timing at the existing 42 ms playback interval.
-The picker contains DVD, Rick, Gamecube, VaporWave, Boyksr, and Toasters. Left/Right also cycle values in
+The generator also includes GIFs in the repository's `gifs` folder, sorted by filename, excluding Jork.
+The picker contains DVD, Rick, Gamecube, VaporWave, Boyksr, Boom, Cupholder, Huh,
+Jarvis, Rally Saab, Saab Ad, and Vert. Left/Right also cycle values in
 the normal face and settings menus, wrapping at either end.
 
 The generator samples every frame to the uncovered 51x32 panel area and losslessly packs
 the sampled palette indices with run/literal encoding. Original textures and
 palettes are preserved. Playback loops at approximately 24 fps; DVD keeps its
-existing 60 fps animation. Toasters is a procedural screensaver targeting
-60 fps, with diagonally drifting winged toasters and toast. It does not require packed movie assets. Other source assets remain available in the repository
+existing 60 fps animation. Jork and Toasters are excluded from Movies. Other source assets remain available in the repository
 but are excluded from the picker and packed data. The generator verifies each frame's size,
 palette indices, and compression round trip.
 
@@ -39,6 +40,10 @@ past Text to reach Tetris and Flappy. Up always returns from a game.
 Tetris: Left/Right move, Enter rotates with wall kicks, Down soft-drops one row,
 and Space hard-drops. Full rows clear and award points; gravity increases with
 score. Enter or Space restarts after game over.
+
+Dino: Space, Enter, left mouse click, or a new boop starts/jumps and restarts
+after game over. Enable BOOP in settings for sensor control. Release the sensor
+between boops; holding it does not repeat jumps.
 
 Flappy: Space, Enter, or a left mouse click starts/flaps. Avoid pipes and the
 floor/ceiling; each passed pipe scores a point. The same controls restart after
